@@ -1,0 +1,7 @@
+/package-lock.json
+node_modules/
+state.json
+
+comp.sh
+svc.sh
+svc.out

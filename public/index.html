@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>NasaraChat</title>
+	<link rel="stylesheet" href="/assets/nasarachat.css">
+	<link rel="stylesheet" href="/fontawesome/css/all.min.css">
+	<script src="openpgp.js" defer></script>
+	<script src="/app.js" defer></script>
+</head>
+
+<body>
+	<header id="header">
+		<h2>NasaraChat is loading! :)</h2>
+	</header>
+	<div id="page">
+		<div id="fill">
+			<i class="fas fa-users fa-3x" id="l"></i>
+			<h2>Sign in</h2>
+			<i class="fas fa-user" id="u"></i>
+			<input type="text" id="username" placeholder="User Name" name="username" disabled>
+			<br><br>
+			<i class="fas fa-lock" id="u"></i>
+			<input type="password" id="password" placeholder="Password" name="password" disabled>
+			<br><br><button id="sign_in">Sign in</button><br><br>
+			<div id="forgot_password">Forgot Password?</div>
+			<br>
+			<span href="signup.html" id="signup_create_new_account">Create New Account?</span>
+		</div>
+	</div>
+	<footer id="footer">
+		<div class="footer">
+			<div class="footer_items">
+				<button id="new_account"><i class="fas fa-user"></i>&nbsp;&nbsp;New Account</button>
+				<button id="existing_account"><i class="fas fa-users"></i>&nbsp;Switch Account</button>
+				<button id="logout"><i class="fas fa-lock"></i>&nbsp;&nbsp;Sign out</button>
+			</div>
+			<div id="copy"> ©2020 Mainasara and Prokop Schield</div>
+		</div>
+	</footer>
+</body>
+
+</html>

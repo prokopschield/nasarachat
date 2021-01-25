@@ -1,0 +1,16 @@
+{
+  "name": "nasarachat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "author": "Prokop Schield, Haliru Yahaya",
+  "license": "ISC",
+  "dependencies": {
+    "blakejs": "^1.1.0",
+    "nodemailer": "^6.4.17",
+    "socket.io": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.16"
+  }
+}
