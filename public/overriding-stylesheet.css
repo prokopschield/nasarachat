@@ -1,0 +1,15 @@
+body, header, footer, div {
+	text-align: center;
+}
+
+#copy {
+	margin-left: 0px;
+	text-align: center;
+	position: relative;
+	transform: translateY(-8px);
+	top: 0%;
+}
+
+div.footer_items {
+	transform: translateX(0px);
+}
