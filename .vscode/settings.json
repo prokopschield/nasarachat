@@ -1,0 +1,14 @@
+{
+	"emeraldwalk.runonsave": {
+	"commands": [
+		{
+			"match": "\\.ts",
+			"cmd": "tsc --target ES5 ${file}"
+		},
+		{
+			"match": "app-src\\.ts",
+			"cmd": "browserify -o public/app.js public/app-src.js"
+		}
+	]
+	}
+}
