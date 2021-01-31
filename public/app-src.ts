@@ -5,6 +5,13 @@ const {
 	blake2sFinal
 } = require("blakejs");
 
+const constants = {
+	profile_pic: {
+		width: 360,
+		height: 480
+	}
+}
+
 Uint8Array.prototype['toHex'] = function() {
 	const a = '0123456789abcdef';
 	let o = '';
@@ -280,6 +287,65 @@ const clickListeners = {
 				document.querySelector('#fill').children[1].innerHTML = (failreason);
 			}
 		});
+	},
+	'profile_pic': async function (ce: Event) {
+		let image_select_element = document.createElement('input');
+		image_select_element.type = 'file';
+		image_select_element.click();
+		let file: File;
+		await new Promise((accept) => {
+			image_select_element.onchange = (e) => {
+				accept(file = e.target['files'][0]);
+			}
+		}).catch(console.log);
+		
+		if (!file) return;
+
+		let image = new Image();
+		image.crossOrigin = 'Anonymous';
+
+		await new Promise((accept) => {
+			let reader = new FileReader();
+			reader.onload = (readerEvent) => {
+				accept(image.src = readerEvent.target.result.toString());
+			}
+			reader.readAsDataURL(file);
+		}).catch(console.log);
+
+		await new Promise((accept) => image.onload = accept);
+		let canvas = document.createElement('canvas');
+		let ctx = canvas.getContext('2d');
+		let ratio = image.height / image.width;
+		let width: number, height: number;
+		if (ratio > 1.5) {
+			height = Math.min(image.height, constants.profile_pic.height);
+			width = height / ratio;
+		} else {
+			width = Math.min(image.width, constants.profile_pic.width);
+			height = width * ratio;
+		}
+		canvas.height = height;
+		canvas.width = width;
+		let ocanvas = document.createElement('canvas');
+		let octx = ocanvas.getContext('2d');
+		ocanvas.width = image.width;
+		ocanvas.height = image.height;
+		octx.drawImage(image, 0, 0, ocanvas.width, ocanvas.height);
+		ctx.drawImage(ocanvas, 0, 0, ocanvas.width, ocanvas.height, 0, 0, canvas.width, canvas.height);
+
+		canvas.toBlob((blob) => {
+			fetch(`/user-content/${instance.username}/profile.jpeg`, {
+				method: 'PUT',
+				body: blob
+			})
+			.then(response => response.text())
+			.then((new_profile_picture) => {
+				socket.emit('update_profile_pic', instance.username, new_profile_picture);
+				console.log(`Uploaded new profile picture ${new_profile_picture}`);
+				socket.once('confirm_profile_pic', console.log);
+			})
+		}, 'image/jpeg')
+
 	},
 };
 
