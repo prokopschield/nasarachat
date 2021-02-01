@@ -24,25 +24,26 @@ Uint8Array.prototype['toHex'] = function() {
 const openpgp:any = window['openpgp'];
 
 const defaultPageContext = 'page';
-const contexts = {
-	signin: 'signin.html',
-	signup: 'signup.html',
-	header: 'header.html',
-	footer: 'footer.html',
+
+enum Context {
+	signin = 'signin.html',
+	signup = 'signup.html',
+	header = 'header.html',
+	footer = 'footer.html',
 
 	// main screen
-	main: 'main.html',
-	search: 'search.html',
-	notifications: 'notifications.html',
-	settings: 'settings.html',
-	chats: 'chats.html',
-	chatscreen: 'chatscreen.html',
-	newchat: 'newchat.html',
-	group: 'newgroup.html',
-	people: 'contacts.html',
-	qrcode: 'qrcode.html',
-	takephoto: 'takephoto.html',
-	profilepic: 'profilepic.html',
+	main = 'main.html',
+	search = 'search.html',
+	notifications = 'notifications.html',
+	settings = 'settings.html',
+	chats = 'chats.html',
+	chatscreen = 'chatscreen.html',
+	newchat = 'newchat.html',
+	group = 'newgroup.html',
+	people = 'contacts.html',
+	qrcode = 'qrcode.html',
+	takephoto = 'takephoto.html',
+	profilepic = 'profilepic.html',
 }
 
 function hash(...args: Array<any>) {
@@ -137,7 +138,7 @@ const clickListeners = {
 	'username': (ce: Event) => {
 		setKeyboardListener((ke: Event) => {
 			setTimeout(() => {
-				if (loadedAsset[defaultPageContext] == contexts.signup) {
+				if (loadedAsset[defaultPageContext] == Context.signup) {
 					const u: string = ce.target['value'];
 					socket.emit('check_username_availability', u);
 					socket.once('username_available', (u: string, a: string) => {
@@ -352,17 +353,17 @@ const clickListeners = {
 
 const bindings = {
 	// main screen
-	mainscreen: contexts.main,
-	find_people: contexts.search,
-	notification: contexts.notifications,
-	settings: contexts.settings,
-	chatelement: contexts.chats,
-	addchatelement: contexts.newchat,
-	groupelement: contexts.people,
-	qrcodeelement: contexts.qrcode,
-	takephoto: contexts.takephoto,
-	profilepic: contexts.profilepic,
-	...contexts
+	mainscreen: Context.main,
+	find_people: Context.search,
+	notification: Context.notifications,
+	settings: Context.settings,
+	chatelement: Context.chats,
+	addchatelement: Context.newchat,
+	groupelement: Context.people,
+	qrcodeelement: Context.qrcode,
+	takephoto: Context.takephoto,
+	profilepic: Context.profilepic,
+	...Context
 }
 
 const boundClickListener = (ce: Event) => {
@@ -386,12 +387,12 @@ const setKeyboardListener = (listener: Function) => {
 
 ((async () => {
 	if (instance.authenticated) {
-		loadAsset(contexts.main);
+		loadAsset(Context.main);
 	} else {
-		loadAsset(contexts.signin);
+		loadAsset(Context.signin);
 	}
-	loadAsset(contexts.header, 'header');
-	loadAsset(contexts.footer, 'footer');
+	loadAsset(Context.header, 'header');
+	loadAsset(Context.footer, 'footer');
 })());
 
 function clickListener(e: Event) {

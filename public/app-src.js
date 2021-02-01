@@ -65,25 +65,26 @@ Uint8Array.prototype['toHex'] = function () {
 };
 var openpgp = window['openpgp'];
 var defaultPageContext = 'page';
-var contexts = {
-    signin: 'signin.html',
-    signup: 'signup.html',
-    header: 'header.html',
-    footer: 'footer.html',
+var Context;
+(function (Context) {
+    Context["signin"] = "signin.html";
+    Context["signup"] = "signup.html";
+    Context["header"] = "header.html";
+    Context["footer"] = "footer.html";
     // main screen
-    main: 'main.html',
-    search: 'search.html',
-    notifications: 'notifications.html',
-    settings: 'settings.html',
-    chats: 'chats.html',
-    chatscreen: 'chatscreen.html',
-    newchat: 'newchat.html',
-    group: 'newgroup.html',
-    people: 'contacts.html',
-    qrcode: 'qrcode.html',
-    takephoto: 'takephoto.html',
-    profilepic: 'profilepic.html',
-};
+    Context["main"] = "main.html";
+    Context["search"] = "search.html";
+    Context["notifications"] = "notifications.html";
+    Context["settings"] = "settings.html";
+    Context["chats"] = "chats.html";
+    Context["chatscreen"] = "chatscreen.html";
+    Context["newchat"] = "newchat.html";
+    Context["group"] = "newgroup.html";
+    Context["people"] = "contacts.html";
+    Context["qrcode"] = "qrcode.html";
+    Context["takephoto"] = "takephoto.html";
+    Context["profilepic"] = "profilepic.html";
+})(Context || (Context = {}));
 function hash() {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -184,7 +185,7 @@ var clickListeners = {
     'username': function (ce) {
         setKeyboardListener(function (ke) {
             setTimeout(function () {
-                if (loadedAsset[defaultPageContext] == contexts.signup) {
+                if (loadedAsset[defaultPageContext] == Context.signup) {
                     var u = ce.target['value'];
                     socket.emit('check_username_availability', u);
                     socket.once('username_available', function (u, a) {
@@ -429,7 +430,7 @@ var clickListeners = {
 };
 var bindings = __assign({ 
     // main screen
-    mainscreen: contexts.main, find_people: contexts.search, notification: contexts.notifications, settings: contexts.settings, chatelement: contexts.chats, addchatelement: contexts.newchat, groupelement: contexts.people, qrcodeelement: contexts.qrcode, takephoto: contexts.takephoto, profilepic: contexts.profilepic }, contexts);
+    mainscreen: Context.main, find_people: Context.search, notification: Context.notifications, settings: Context.settings, chatelement: Context.chats, addchatelement: Context.newchat, groupelement: Context.people, qrcodeelement: Context.qrcode, takephoto: Context.takephoto, profilepic: Context.profilepic }, Context);
 var boundClickListener = function (ce) {
     loadAsset(bindings[ce['target']['id']]);
 };
@@ -445,13 +446,13 @@ var setKeyboardListener = function (listener) {
 ((function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         if (instance.authenticated) {
-            loadAsset(contexts.main);
+            loadAsset(Context.main);
         }
         else {
-            loadAsset(contexts.signin);
+            loadAsset(Context.signin);
         }
-        loadAsset(contexts.header, 'header');
-        loadAsset(contexts.footer, 'footer');
+        loadAsset(Context.header, 'header');
+        loadAsset(Context.footer, 'footer');
         return [2 /*return*/];
     });
 }); })());
