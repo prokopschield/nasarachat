@@ -77,6 +77,7 @@ var contexts = {
     notifications: 'notifications.html',
     settings: 'settings.html',
     chats: 'chats.html',
+    chatscreen: 'chatscreen.html',
     newchat: 'newchat.html',
     group: 'newgroup.html',
     people: 'contacts.html',
