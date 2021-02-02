@@ -202,15 +202,19 @@ function goBack() {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    if (!instance.authenticated) return [3 /*break*/, 4];
                     if (!(screenHistory.length > 1)) return [3 /*break*/, 2];
-                    if (!instance.authenticated) return [3 /*break*/, 2];
                     _a = screenHistory[screenHistory.length - 2], cid = _a[0], screen_1 = _a[1], detail = _a[2];
                     return [4 /*yield*/, loadScreen(screen_1, cid, detail, false)];
                 case 1:
                     _b.sent();
                     screenHistory.pop();
-                    _b.label = 2;
-                case 2: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 2: return [4 /*yield*/, loadScreen(Context.main, 'page', 'goBack')];
+                case 3:
+                    _b.sent();
+                    _b.label = 4;
+                case 4: return [2 /*return*/];
             }
         });
     });

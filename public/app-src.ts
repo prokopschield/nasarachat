@@ -138,11 +138,13 @@ async function loadScreen(screen: Context, cid: string = defaultPageContext, det
 }
 
 async function goBack() {
-	if (screenHistory.length > 1) {
-		if (instance.authenticated) {
+	if (instance.authenticated) {
+		if (screenHistory.length > 1) {
 			let [cid, screen, detail] = screenHistory[screenHistory.length - 2];
 			await loadScreen(screen, cid, detail, false);
 			screenHistory.pop();
+		} else {
+			await loadScreen(Context.main, 'page', 'goBack');
 		}
 	}
 }
@@ -441,7 +443,7 @@ function clickListener(e: Event) {
 		if (e.target['parentElement']) {
 			setImmediate(() => e.target['parentElement'].click());
 		}
-		
+
 	}
 }
 /*
