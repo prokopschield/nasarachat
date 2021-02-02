@@ -195,6 +195,25 @@ function loadScreen(screen, cid, detail, back) {
         });
     });
 }
+function goBack() {
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, screen_1, cid, detail;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (!(screenHistory.length > 1)) return [3 /*break*/, 2];
+                    if (!instance.authenticated) return [3 /*break*/, 2];
+                    _a = screenHistory[screenHistory.length - 2], screen_1 = _a[0], cid = _a[1], detail = _a[2];
+                    return [4 /*yield*/, loadScreen(screen_1, cid, detail, false)];
+                case 1:
+                    _b.sent();
+                    screenHistory.pop();
+                    _b.label = 2;
+                case 2: return [2 /*return*/];
+            }
+        });
+    });
+}
 var keyfn = {
     generateKeypair: function (username, password) { return __awaiter(void 0, void 0, void 0, function () {
         var _a, key, privateKeyArmored, publicKeyArmored, keypair;

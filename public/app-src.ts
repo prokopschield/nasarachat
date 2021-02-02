@@ -137,6 +137,16 @@ async function loadScreen(screen: Context, cid: string = defaultPageContext, det
 	if (back) screenHistory.push([cid, screen, detail]);
 }
 
+async function goBack() {
+	if (screenHistory.length > 1) {
+		if (instance.authenticated) {
+			let [screen, cid, detail] = screenHistory[screenHistory.length - 2];
+			await loadScreen(screen, cid, detail, false);
+			screenHistory.pop();
+		}
+	}
+}
+
 const keyfn = {
 	generateKeypair: async (username: string, password: string) => {
 		const {key, privateKeyArmored, publicKeyArmored} = await openpgp.generateKey({
