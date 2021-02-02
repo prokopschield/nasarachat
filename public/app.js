@@ -202,7 +202,7 @@ function goBack() {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    if (!instance.authenticated) return [3 /*break*/, 4];
+                    if (!instance.authenticated) return [3 /*break*/, 5];
                     if (!(screenHistory.length > 1)) return [3 /*break*/, 2];
                     _a = screenHistory[screenHistory.length - 2], cid = _a[0], screen_1 = _a[1], detail = _a[2];
                     return [4 /*yield*/, loadScreen(screen_1, cid, detail, false)];
@@ -214,7 +214,14 @@ function goBack() {
                 case 3:
                     _b.sent();
                     _b.label = 4;
-                case 4: return [2 /*return*/];
+                case 4: return [3 /*break*/, 7];
+                case 5:
+                    if (!(screenHistory.length && (screenHistory[screenHistory.length - 1][2] !== 'goBack'))) return [3 /*break*/, 7];
+                    return [4 /*yield*/, loadScreen(Context.signin, 'page', 'goBack', false)];
+                case 6:
+                    _b.sent();
+                    _b.label = 7;
+                case 7: return [2 /*return*/];
             }
         });
     });

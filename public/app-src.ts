@@ -146,6 +146,8 @@ async function goBack() {
 		} else {
 			await loadScreen(Context.main, 'page', 'goBack');
 		}
+	} else if (screenHistory.length && (screenHistory[screenHistory.length - 1][2] !== 'goBack')) {
+		await loadScreen(Context.signin, 'page', 'goBack', false);
 	}
 }
 
