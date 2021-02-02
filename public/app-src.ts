@@ -381,6 +381,8 @@ const clickListeners = {
 		}, 'image/jpeg')
 
 	},
+
+	back: goBack,
 };
 
 const bindings = {

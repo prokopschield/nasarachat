@@ -483,6 +483,7 @@ var clickListeners = {
             });
         });
     },
+    back: goBack,
 };
 var bindings = __assign({ 
     // main screen
