@@ -497,6 +497,7 @@ var clickListeners = {
         });
     },
     back: goBack,
+    page: function () { },
 };
 var bindings = __assign({ 
     // main screen

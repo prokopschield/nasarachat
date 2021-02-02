@@ -387,6 +387,8 @@ const clickListeners = {
 	},
 
 	back: goBack,
+	
+	page () {}, // no action needed when user simply clicks the background
 };
 
 const bindings = {
