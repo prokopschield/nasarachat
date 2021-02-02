@@ -140,7 +140,7 @@ async function loadScreen(screen: Context, cid: string = defaultPageContext, det
 async function goBack() {
 	if (screenHistory.length > 1) {
 		if (instance.authenticated) {
-			let [screen, cid, detail] = screenHistory[screenHistory.length - 2];
+			let [cid, screen, detail] = screenHistory[screenHistory.length - 2];
 			await loadScreen(screen, cid, detail, false);
 			screenHistory.pop();
 		}
