@@ -433,7 +433,15 @@ function clickListener(e: Event) {
 	if (clickListeners[e.target['id']]) {
 		clickListeners[e.target['id']](e);
 	} else {
-		console.log('Click listener not defined for', e.target['id']);
+
+		if (e.target['id']) {
+			console.log('Click listener not defined for', e.target['id']);
+		}
+		
+		if (e.target['parentElement']) {
+			setImmediate(() => e.target['parentElement'].click());
+		}
+		
 	}
 }
 /*
