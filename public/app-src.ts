@@ -434,6 +434,7 @@ const setKeyboardListener = (listener: Function) => {
 })());
 
 function clickListener(e: Event) {
+	e.preventDefault();
 	if (clickListeners[e.target['id']]) {
 		clickListeners[e.target['id']](e);
 	} else {

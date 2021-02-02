@@ -527,6 +527,7 @@ var setKeyboardListener = function (listener) {
     });
 }); })());
 function clickListener(e) {
+    e.preventDefault();
     if (clickListeners[e.target['id']]) {
         clickListeners[e.target['id']](e);
     }
