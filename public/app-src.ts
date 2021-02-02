@@ -28,6 +28,7 @@ const defaultPageContext = 'page';
 enum Context {
 	signin = 'signin.html',
 	signup = 'signup.html',
+	forpwd = 'forgotpassword.html',
 	header = 'header.html',
 	footer = 'footer.html',
 
@@ -115,6 +116,27 @@ async function loadAsset(asset: string, cid: string = defaultPageContext) {
 	loadedAsset[cid] = asset;
 }
 
+const screenCache = {}
+
+const screenHistory = [];
+
+async function loadScreen(screen: Context, cid: string = defaultPageContext, detail: string = 'null', back: boolean = true) {
+	let [ , screenLast, detailLast ] = screenHistory.length ? screenHistory[screenHistory.length - 1] : [,,];
+	if (!screenCache[cid]) screenCache[cid] = {};
+	if (!screenCache[cid][screenLast]) screenCache[cid][screenLast] = {};
+	const ctxElem = document.querySelector(`#${cid}`);
+	screenCache[cid][screenLast][detailLast] = [...ctxElem.childNodes];
+	screenCache[cid][screenLast][detailLast].forEach((e: Element) => ctxElem.removeChild(e));
+
+	if (!screenCache[cid][screen]) screenCache[cid][screen] = {};
+	if (screenCache[cid][screen][detail])
+		screenCache[cid][screen][detail].forEach((e: Element) => ctxElem.appendChild(e));
+	else
+		loadAsset(screen, cid);
+	
+	if (back) screenHistory.push([cid, screen, detail]);
+}
+
 const keyfn = {
 	generateKeypair: async (username: string, password: string) => {
 		const {key, privateKeyArmored, publicKeyArmored} = await openpgp.generateKey({
@@ -182,7 +204,7 @@ const clickListeners = {
 				instance.password = password;
 				instance.authenticated = true;
 				instance.keys = keypair;
-				loadAsset('main');
+				loadScreen(Context.main);
 			} else {
 				alert(failreason);
 			}
@@ -200,33 +222,33 @@ const clickListeners = {
 				instance.password = password;
 				instance.authenticated = true;
 				instance.keys = keypair;
-				loadAsset('main');
+				loadScreen(Context.main);
 			} else {
 				alert(failreason);
 			}
 		});
 	},
 	'new_account': (ce: Event) => {
-		loadAsset('signup');
+		loadScreen(Context.signup);
 	},
 	'existing_account': (ce: Event) => {
-		loadAsset('signin');
+		loadScreen(Context.signin);
 	},
 	'logout': (ce: Event) => {
-		loadAsset('signin');
+		loadScreen(Context.signin);
 		instance.authenticated = false;
 		instance.keys.priv = null;
 	},
 	'signup_create_new_account': (ce: Event) => {
-		loadAsset('signup');
+		loadScreen(Context.signup);
 	},
 
 	// forgotten password
 	'forgot_password': (ce: Event) => {
-		loadAsset('forgotpassword');
+		loadScreen(Context.forpwd);
 	},
 	'ar': (ce: Event) => {
-		loadAsset('signin');
+		loadScreen(Context.signin);
 	},
 	'new_password': async (ce: Event) => {
 	//	let username = document.querySelector('#username')['value'];
@@ -283,7 +305,7 @@ const clickListeners = {
 				instance.password = password;
 				instance.authenticated = true;
 				instance.keys = keypair;
-				loadAsset('main');
+				loadScreen(Context.main);
 				alert('Password changed.');
 			} else {
 				document.querySelector('#fill').children[1].innerHTML = (failreason);
@@ -367,7 +389,7 @@ const bindings = {
 }
 
 const boundClickListener = (ce: Event) => {
-	loadAsset(bindings[ce['target']['id']]);
+	loadScreen(bindings[ce['target']['id']]);
 }
 
 for (const e in bindings) {
@@ -387,12 +409,12 @@ const setKeyboardListener = (listener: Function) => {
 
 ((async () => {
 	if (instance.authenticated) {
-		loadAsset(Context.main);
+		loadScreen(Context.main);
 	} else {
-		loadAsset(Context.signin);
+		loadScreen(Context.signin);
 	}
-	loadAsset(Context.header, 'header');
-	loadAsset(Context.footer, 'footer');
+	loadScreen(Context.header, 'header');
+	loadScreen(Context.footer, 'footer');
 })());
 
 function clickListener(e: Event) {
@@ -411,6 +433,6 @@ document.body.addEventListener('click', clickListener, true);
 document.body.addEventListener('keyup', (e: Event) => keyboardListener(e), true);
 
 window['nasara'] = {
-	loadAsset,
+	loadAsset: loadScreen,
 	keyfn,
 }

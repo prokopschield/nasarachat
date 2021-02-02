@@ -46,6 +46,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var socket_io_client_1 = require("socket.io-client");
 var _a = require("blakejs"), blake2sInit = _a.blake2sInit, blake2sUpdate = _a.blake2sUpdate, blake2sFinal = _a.blake2sFinal;
@@ -69,6 +76,7 @@ var Context;
 (function (Context) {
     Context["signin"] = "signin.html";
     Context["signup"] = "signup.html";
+    Context["forpwd"] = "forgotpassword.html";
     Context["header"] = "header.html";
     Context["footer"] = "footer.html";
     // main screen
@@ -157,6 +165,35 @@ function loadAsset(asset, cid) {
         });
     });
 }
+var screenCache = {};
+var screenHistory = [];
+function loadScreen(screen, cid, detail, back) {
+    if (cid === void 0) { cid = defaultPageContext; }
+    if (detail === void 0) { detail = 'null'; }
+    if (back === void 0) { back = true; }
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, screenLast, detailLast, ctxElem;
+        return __generator(this, function (_b) {
+            _a = screenHistory.length ? screenHistory[screenHistory.length - 1] : [, ,], screenLast = _a[1], detailLast = _a[2];
+            if (!screenCache[cid])
+                screenCache[cid] = {};
+            if (!screenCache[cid][screenLast])
+                screenCache[cid][screenLast] = {};
+            ctxElem = document.querySelector("#" + cid);
+            screenCache[cid][screenLast][detailLast] = __spreadArrays(ctxElem.childNodes);
+            screenCache[cid][screenLast][detailLast].forEach(function (e) { return ctxElem.removeChild(e); });
+            if (!screenCache[cid][screen])
+                screenCache[cid][screen] = {};
+            if (screenCache[cid][screen][detail])
+                screenCache[cid][screen][detail].forEach(function (e) { return ctxElem.appendChild(e); });
+            else
+                loadAsset(screen, cid);
+            if (back)
+                screenHistory.push([cid, screen, detail]);
+            return [2 /*return*/];
+        });
+    });
+}
 var keyfn = {
     generateKeypair: function (username, password) { return __awaiter(void 0, void 0, void 0, function () {
         var _a, key, privateKeyArmored, publicKeyArmored, keypair;
@@ -236,7 +273,7 @@ var clickListeners = {
                             instance.password = password;
                             instance.authenticated = true;
                             instance.keys = keypair;
-                            loadAsset('main');
+                            loadScreen(Context.main);
                         }
                         else {
                             alert(failreason);
@@ -260,7 +297,7 @@ var clickListeners = {
                     instance.password = password;
                     instance.authenticated = true;
                     instance.keys = keypair;
-                    loadAsset('main');
+                    loadScreen(Context.main);
                 }
                 else {
                     alert(failreason);
@@ -270,25 +307,25 @@ var clickListeners = {
         });
     }); },
     'new_account': function (ce) {
-        loadAsset('signup');
+        loadScreen(Context.signup);
     },
     'existing_account': function (ce) {
-        loadAsset('signin');
+        loadScreen(Context.signin);
     },
     'logout': function (ce) {
-        loadAsset('signin');
+        loadScreen(Context.signin);
         instance.authenticated = false;
         instance.keys.priv = null;
     },
     'signup_create_new_account': function (ce) {
-        loadAsset('signup');
+        loadScreen(Context.signup);
     },
     // forgotten password
     'forgot_password': function (ce) {
-        loadAsset('forgotpassword');
+        loadScreen(Context.forpwd);
     },
     'ar': function (ce) {
-        loadAsset('signin');
+        loadScreen(Context.signin);
     },
     'new_password': function (ce) { return __awaiter(void 0, void 0, void 0, function () {
         var email, password, fetched_username, email_not_registered, email_1, username, _a, key, keypair, email_not_registered;
@@ -348,7 +385,7 @@ var clickListeners = {
                             instance.password = password;
                             instance.authenticated = true;
                             instance.keys = keypair;
-                            loadAsset('main');
+                            loadScreen(Context.main);
                             alert('Password changed.');
                         }
                         else {
@@ -432,7 +469,7 @@ var bindings = __assign({
     // main screen
     mainscreen: Context.main, find_people: Context.search, notification: Context.notifications, settings: Context.settings, chatelement: Context.chats, addchatelement: Context.newchat, groupelement: Context.people, qrcodeelement: Context.qrcode, takephoto: Context.takephoto, profilepic: Context.profilepic }, Context);
 var boundClickListener = function (ce) {
-    loadAsset(bindings[ce['target']['id']]);
+    loadScreen(bindings[ce['target']['id']]);
 };
 for (var e in bindings) {
     if (!clickListeners[e]) {
@@ -446,13 +483,13 @@ var setKeyboardListener = function (listener) {
 ((function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         if (instance.authenticated) {
-            loadAsset(Context.main);
+            loadScreen(Context.main);
         }
         else {
-            loadAsset(Context.signin);
+            loadScreen(Context.signin);
         }
-        loadAsset(Context.header, 'header');
-        loadAsset(Context.footer, 'footer');
+        loadScreen(Context.header, 'header');
+        loadScreen(Context.footer, 'footer');
         return [2 /*return*/];
     });
 }); })());
@@ -472,6 +509,6 @@ document.querySelector('#signup_create_new_account').addEventListener('click', (
 document.body.addEventListener('click', clickListener, true);
 document.body.addEventListener('keyup', function (e) { return keyboardListener(e); }, true);
 window['nasara'] = {
-    loadAsset: loadAsset,
+    loadAsset: loadScreen,
     keyfn: keyfn,
 };
