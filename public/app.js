@@ -541,11 +541,6 @@ function clickListener(e) {
         }
     }
 }
-/*
-document.querySelector('#signup_create_new_account').addEventListener('click', (e: Event) => {
-    e.preventDefault();
-    loadAsset(contexts.signin);
-}, true);*/
 document.body.addEventListener('click', clickListener, true);
 document.body.addEventListener('keyup', function (e) { return keyboardListener(e); }, true);
 window['nasara'] = {
