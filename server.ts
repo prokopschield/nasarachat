@@ -81,6 +81,8 @@ function normalizeUsername(u: string) {
 	return u;
 }
 
+const userSockets = {};
+
 io.on('connection', (socket: any) => {
 	socket.on('check_username_availability', (u: string) => {
 		u = normalizeUsername(u);
@@ -134,6 +136,7 @@ io.on('connection', (socket: any) => {
 
 		if (keys[hash]) {
 			socket.emit('login_response', username, true, null, keys[hash]);
+			userSockets[username] = socket;
 		} else {
 			socket.emit('login_response', username, false, 'Incorrent username or password.');
 		}
@@ -190,6 +193,25 @@ io.on('connection', (socket: any) => {
 			writeFileSync('state.json', JSON.stringify({users, emails, keys}));
 		} else {
 			socket.emit('forgot_password_response', username, false, dothis.toString() || coughtError.toString() || 'E-mail verification failed.');
+		}
+	});
+
+	socket.on('message', (recipient: string, message: string) => {
+		if (typeof recipient !== 'string') return;
+		if (typeof message !== 'string') return;
+		let username = normalizeUsername(recipient);
+		if (userSockets[username]) {
+			userSockets[username].emit('message', message);
+		}
+	});
+
+	socket.on('query_public_key', (username: string) => {
+		if (typeof username !== 'string') return;
+		username = normalizeUsername(username);
+		if (users[username]) {
+			socket.emit('public_key', username, users[username]);
+		} else {
+			socket.emit('public_key', username, false);
 		}
 	});
 });

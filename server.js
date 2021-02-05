@@ -128,6 +128,7 @@ function normalizeUsername(u) {
     u = u.replace(/[^a-z]/g, '');
     return u;
 }
+var userSockets = {};
 io.on('connection', function (socket) {
     socket.on('check_username_availability', function (u) {
         u = normalizeUsername(u);
@@ -182,6 +183,7 @@ io.on('connection', function (socket) {
         username = normalizeUsername(username);
         if (keys[hash]) {
             socket.emit('login_response', username, true, null, keys[hash]);
+            userSockets[username] = socket;
         }
         else {
             socket.emit('login_response', username, false, 'Incorrent username or password.');
@@ -252,6 +254,27 @@ io.on('connection', function (socket) {
                 }
             });
         });
+    });
+    socket.on('message', function (recipient, message) {
+        if (typeof recipient !== 'string')
+            return;
+        if (typeof message !== 'string')
+            return;
+        var username = normalizeUsername(recipient);
+        if (userSockets[username]) {
+            userSockets[username].emit('message', message);
+        }
+    });
+    socket.on('query_public_key', function (username) {
+        if (typeof username !== 'string')
+            return;
+        username = normalizeUsername(username);
+        if (users[username]) {
+            socket.emit('public_key', username, users[username]);
+        }
+        else {
+            socket.emit('public_key', username, false);
+        }
     });
 });
 var nodemailer = require('nodemailer');
