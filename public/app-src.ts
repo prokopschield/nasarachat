@@ -81,7 +81,8 @@ interface Instance {
 
 interface Keys {
 	priv: string,
-	pub: string
+	pub: string,
+	key?: any,
 }
 
 const instance: Instance = {
@@ -162,7 +163,8 @@ const keyfn = {
 		});
 		const keypair: Keys = {
 			priv: privateKeyArmored,
-			pub: publicKeyArmored
+			pub: publicKeyArmored,
+			key,
 		}
 
 		return {
@@ -239,6 +241,11 @@ const clickListeners = {
 				instance.authenticated = true;
 				instance.keys = keypair;
 				loadScreen(Context.main);
+				openpgp.key.readArmored(keypair.priv)
+				.then(({keys: [key]}) => {
+					key.decrypt(password)
+					.then(() => instance.keys.key = key);
+				})
 			} else {
 				alert(failreason);
 			}
@@ -253,7 +260,7 @@ const clickListeners = {
 	'logout': (ce: Event) => {
 		loadScreen(Context.signin);
 		instance.authenticated = false;
-		instance.keys.priv = null;
+		instance.keys.priv = instance.keys.key = null;
 	},
 	'signup_create_new_account': (ce: Event) => {
 		loadScreen(Context.signup);
@@ -486,3 +493,60 @@ function storage(name: string = 'global') {
 }
 
 Object.assign(storage, storage());
+
+function normalizeUsername(u: string) {
+	u = ('' + u).toLowerCase();
+	u = u.replace(/[^a-z]/g, '');
+	return u;
+}
+
+async function message(to: string, message: unknown): Promise<boolean> {
+	var pubkey = await storage('pubkey').fetch(to);
+	to = normalizeUsername(to);
+	socket.emit('query_public_key', to);
+	while (!pubkey) {
+		let res: string[] = await new Promise((accept) => socket.once('public_key', (...res: string[]) => accept(res)));
+		if (res[0] === to) {
+			if (res[1]) {
+				pubkey = res[1];
+			} else {
+				return false;
+			}
+		}
+	}
+
+	const { data: encrypted } = await openpgp.encrypt({
+		message: openpgp.message.fromText(JSON.stringify(message)),
+		publicKeys: (await openpgp.key.readArmored(pubkey)).keys,
+		privateKeys: [ instance.keys.key ]
+	});
+
+	socket.emit(to, encrypted);
+	return true;
+}
+
+socket.on('public_key', (username: string, pubkey: string) => {
+	if (pubkey) {
+		storage('pubkey').store(username, pubkey);
+	}
+});
+
+socket.on('message', async (message: string) => {
+	try {
+		const { data: decrypted } = await openpgp.decrypt({
+			message: await openpgp.message.readArmored(message),
+			privateKeys: [ instance.keys.key ]
+		});
+		messageEventHandler(decrypted);
+	} catch(error) {
+		console.log({
+			message, error
+		});
+	}
+});
+
+function messageEventHandler(message: unknown) {
+	if (typeof message !== 'object') {
+		return console.log(message);
+	}
+}
