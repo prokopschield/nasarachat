@@ -552,6 +552,7 @@ document.body.addEventListener('keyup', function (e) { return keyboardListener(e
 window['nasara'] = {
     loadAsset: loadScreen,
     keyfn: keyfn,
+    sendMessage: sendMessage,
 };
 var forageInstances = {};
 function storage(name) {
@@ -604,7 +605,7 @@ function normalizeUsername(u) {
     u = u.replace(/[^a-z]/g, '');
     return u;
 }
-function message(to, message) {
+function sendMessage(to, message) {
     return __awaiter(this, void 0, void 0, function () {
         var pubkey, res, encrypted, _a, _b;
         var _c;

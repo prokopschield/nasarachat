@@ -467,6 +467,7 @@ document.body.addEventListener('keyup', (e: Event) => keyboardListener(e), true)
 window['nasara'] = {
 	loadAsset: loadScreen,
 	keyfn,
+	sendMessage,
 }
 
 const forageInstances = {};
@@ -500,7 +501,7 @@ function normalizeUsername(u: string) {
 	return u;
 }
 
-async function message(to: string, message: unknown): Promise<boolean> {
+async function sendMessage(to: string, message: unknown): Promise<boolean> {
 	var pubkey = await storage('pubkey').fetch(to);
 	to = normalizeUsername(to);
 	socket.emit('query_public_key', to);
