@@ -1,4 +1,6 @@
 import { io } from "socket.io-client";
+const localforage = require('localforage');
+
 const {
 	blake2sInit,
 	blake2sUpdate,
@@ -459,3 +461,28 @@ window['nasara'] = {
 	loadAsset: loadScreen,
 	keyfn,
 }
+
+const forageInstances = {};
+
+function storage(name: string = 'global') {
+	if (!forageInstances[name]) {
+		forageInstances[name] = localforage.createInstance({
+			name
+		});
+	}
+	return storage[name] = {
+		async store (key: string, value: unknown) {
+			return await forageInstances[name].setItem(key, value);
+		},
+		async fetch (key: string) {
+			return await forageInstances[name].getItem(key);
+		},
+		async swap (key: string, value: unknown) {
+			let ret = await forageInstances[name].getItem(key);
+			forageInstances[name].setItem(key, value);
+			return ret;
+		},
+	}
+}
+
+Object.assign(storage, storage());

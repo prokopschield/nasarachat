@@ -55,6 +55,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var socket_io_client_1 = require("socket.io-client");
+var localforage = require('localforage');
 var _a = require("blakejs"), blake2sInit = _a.blake2sInit, blake2sUpdate = _a.blake2sUpdate, blake2sFinal = _a.blake2sFinal;
 var constants = {
     profile_pic: {
@@ -545,3 +546,49 @@ window['nasara'] = {
     loadAsset: loadScreen,
     keyfn: keyfn,
 };
+var forageInstances = {};
+function storage(name) {
+    if (name === void 0) { name = 'global'; }
+    if (!forageInstances[name]) {
+        forageInstances[name] = localforage.createInstance({
+            name: name
+        });
+    }
+    return storage[name] = {
+        store: function (key, value) {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, forageInstances[name].setItem(key, value)];
+                        case 1: return [2 /*return*/, _a.sent()];
+                    }
+                });
+            });
+        },
+        fetch: function (key) {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, forageInstances[name].getItem(key)];
+                        case 1: return [2 /*return*/, _a.sent()];
+                    }
+                });
+            });
+        },
+        swap: function (key, value) {
+            return __awaiter(this, void 0, void 0, function () {
+                var ret;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, forageInstances[name].getItem(key)];
+                        case 1:
+                            ret = _a.sent();
+                            forageInstances[name].setItem(key, value);
+                            return [2 /*return*/, ret];
+                    }
+                });
+            });
+        },
+    };
+}
+Object.assign(storage, storage());
