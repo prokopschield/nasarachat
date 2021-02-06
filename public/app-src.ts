@@ -522,7 +522,7 @@ async function sendMessage(to: string, message: unknown): Promise<boolean> {
 		privateKeys: [ instance.keys.key ]
 	});
 
-	socket.emit(to, encrypted);
+	socket.emit('message', to, encrypted);
 	return true;
 }
 

@@ -650,7 +650,7 @@ function sendMessage(to, message) {
                             _c)])];
                 case 6:
                     encrypted = (_d.sent()).data;
-                    socket.emit(to, encrypted);
+                    socket.emit('message', to, encrypted);
                     return [2 /*return*/, true];
             }
         });
