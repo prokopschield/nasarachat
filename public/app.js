@@ -564,6 +564,8 @@ function storage(name) {
             name: name
         });
     }
+    if (storage[name])
+        return storage[name];
     return storage[name] = {
         store: function (key, value) {
             return __awaiter(this, void 0, void 0, function () {
@@ -607,20 +609,20 @@ function normalizeUsername(u) {
     u = u.replace(/[^a-z]/g, '');
     return u;
 }
-function sendMessage(to, message) {
+function queryPublicKey(user) {
     return __awaiter(this, void 0, void 0, function () {
-        var pubkey, res, encrypted, _a, _b;
-        var _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0: return [4 /*yield*/, storage('pubkey').fetch(to)];
+        var pubkey, res;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    user = normalizeUsername(user);
+                    return [4 /*yield*/, storage('pubkey').fetch(user)];
                 case 1:
-                    pubkey = _d.sent();
-                    to = normalizeUsername(to);
-                    socket.emit('query_public_key', to);
-                    _d.label = 2;
-                case 2:
-                    if (!!pubkey) return [3 /*break*/, 4];
+                    pubkey = _a.sent();
+                    if (pubkey) {
+                        return [2 /*return*/, pubkey];
+                    }
+                    socket.emit('query_public_key', user);
                     return [4 /*yield*/, new Promise(function (accept) { return socket.once('public_key', function () {
                             var res = [];
                             for (var _i = 0; _i < arguments.length; _i++) {
@@ -628,29 +630,85 @@ function sendMessage(to, message) {
                             }
                             return accept(res);
                         }); })];
-                case 3:
-                    res = _d.sent();
-                    if (res[0] === to) {
+                case 2:
+                    res = _a.sent();
+                    if (res[0] === user) {
                         if (res[1]) {
-                            pubkey = res[1];
+                            storage('pubkey').store(user, res[1]);
+                            return [2 /*return*/, res[1]];
                         }
                         else {
                             return [2 /*return*/, false];
                         }
                     }
-                    return [3 /*break*/, 2];
-                case 4:
+                    else {
+                        return [2 /*return*/, queryPublicKey(user)];
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+var pubKeyCache = {};
+function getPublicKeyObj(pubkey) {
+    return __awaiter(this, void 0, void 0, function () {
+        var key;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (pubKeyCache[pubkey]) {
+                        return [2 /*return*/, pubKeyCache[pubkey]];
+                    }
+                    return [4 /*yield*/, openpgp.key.readArmored(pubkey)];
+                case 1:
+                    key = (_a.sent()).keys[0];
+                    if (key) {
+                        return [2 /*return*/, pubKeyCache[pubkey] = key];
+                    }
+                    else
+                        return [2 /*return*/, false];
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function sendMessage(to, message) {
+    return __awaiter(this, void 0, void 0, function () {
+        var pubkey, encryptedMessage, _a, _b, transportedObject, transportMessage, _c, _d;
+        var _e, _f;
+        return __generator(this, function (_g) {
+            switch (_g.label) {
+                case 0: return [4 /*yield*/, queryPublicKey(to)];
+                case 1:
+                    pubkey = _g.sent();
+                    if (!pubkey)
+                        return [2 /*return*/];
                     _b = (_a = openpgp).encrypt;
-                    _c = {
+                    _e = {
                         message: openpgp.message.fromText(JSON.stringify(message))
                     };
-                    return [4 /*yield*/, openpgp.key.readArmored(pubkey)];
-                case 5: return [4 /*yield*/, _b.apply(_a, [(_c.publicKeys = (_d.sent()).keys,
-                            _c.privateKeys = [instance.keys.key],
-                            _c)])];
-                case 6:
-                    encrypted = (_d.sent()).data;
-                    socket.emit('message', to, encrypted);
+                    return [4 /*yield*/, getPublicKeyObj(pubkey)];
+                case 2: return [4 /*yield*/, _b.apply(_a, [(_e.publicKeys = [_g.sent()],
+                            _e.privateKeys = [instance.keys.key],
+                            _e)])];
+                case 3:
+                    encryptedMessage = (_g.sent()).data;
+                    transportedObject = ({
+                        sender: instance.username,
+                        recipient: to,
+                        message: encryptedMessage,
+                    });
+                    _d = (_c = openpgp).encrypt;
+                    _f = {
+                        message: openpgp.message.fromText(JSON.stringify(transportedObject))
+                    };
+                    return [4 /*yield*/, getPublicKeyObj(pubkey)];
+                case 4: return [4 /*yield*/, _d.apply(_c, [(_f.publicKeys = [_g.sent()],
+                            _f.privateKeys = [instance.keys.key],
+                            _f)])];
+                case 5:
+                    transportMessage = (_g.sent()).data;
+                    socket.emit('message', to, transportMessage);
                     return [2 /*return*/, true];
             }
         });
@@ -676,7 +734,7 @@ socket.on('message', function (message) { return __awaiter(void 0, void 0, void 
                         _c)])];
             case 2:
                 decrypted = (_d.sent()).data;
-                messageEventHandler(decrypted);
+                messageVerifier(JSON.parse(decrypted));
                 return [3 /*break*/, 4];
             case 3:
                 error_1 = _d.sent();
@@ -688,9 +746,63 @@ socket.on('message', function (message) { return __awaiter(void 0, void 0, void 
         }
     });
 }); });
-function messageEventHandler(message) {
-    if (typeof message !== 'object') {
-        return console.log(message);
+function messageVerifier(msgObject) {
+    return __awaiter(this, void 0, void 0, function () {
+        var message, recipient, sender, pubkey, decrypted, _a, _b, error_2;
+        var _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    if (typeof msgObject !== 'object') {
+                        return [2 /*return*/, console.log('Anonymous debug message:', msgObject)];
+                    }
+                    message = msgObject.message, recipient = msgObject.recipient, sender = msgObject.sender;
+                    if (!message || !recipient || !sender) {
+                        return [2 /*return*/, console.log('Received invalid message', msgObject)];
+                    }
+                    return [4 /*yield*/, queryPublicKey(normalizeUsername(sender))];
+                case 1:
+                    pubkey = _d.sent();
+                    if (!pubkey || (typeof message !== 'string') || (recipient !== instance.username)) {
+                        return [2 /*return*/, console.log('Received invalid message', msgObject)];
+                    }
+                    _d.label = 2;
+                case 2:
+                    _d.trys.push([2, 6, , 7]);
+                    _b = (_a = openpgp).decrypt;
+                    _c = {};
+                    return [4 /*yield*/, openpgp.message.readArmored(message)];
+                case 3:
+                    _c.message = _d.sent();
+                    return [4 /*yield*/, getPublicKeyObj(pubkey)];
+                case 4: return [4 /*yield*/, _b.apply(_a, [(_c.publicKeys = [_d.sent()],
+                            _c.privateKeys = [instance.keys.key],
+                            _c)])];
+                case 5:
+                    decrypted = (_d.sent()).data;
+                    messageHandler(sender, JSON.parse(decrypted));
+                    return [3 /*break*/, 7];
+                case 6:
+                    error_2 = _d.sent();
+                    console.log({
+                        msgObject: msgObject, message: message, recipient: recipient, sender: sender, error: error_2
+                    });
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function messageHandler(sender, message) {
+    console.log('Message received!', { sender: sender, message: message });
+    if (typeof message === 'string') {
+        // Add message receiver here!
+    }
+    else if (typeof message !== 'object') {
+        console.log('Error: Invalid message received!', { sender: sender, message: message });
+    }
+    else {
+        // Anything besides plaintext
     }
 }
 

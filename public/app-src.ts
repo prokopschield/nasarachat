@@ -478,6 +478,7 @@ function storage(name: string = 'global') {
 			name
 		});
 	}
+	if (storage[name]) return storage[name];
 	return storage[name] = {
 		async store (key: string, value: unknown) {
 			return await forageInstances[name].setItem(key, value);
@@ -501,28 +502,61 @@ function normalizeUsername(u: string) {
 	return u;
 }
 
-async function sendMessage(to: string, message: unknown): Promise<boolean> {
-	var pubkey = await storage('pubkey').fetch(to);
-	to = normalizeUsername(to);
-	socket.emit('query_public_key', to);
-	while (!pubkey) {
-		let res: string[] = await new Promise((accept) => socket.once('public_key', (...res: string[]) => accept(res)));
-		if (res[0] === to) {
-			if (res[1]) {
-				pubkey = res[1];
-			} else {
-				return false;
-			}
-		}
+async function queryPublicKey(user: string): Promise<string|false> {
+	user = normalizeUsername(user);
+	let pubkey: string = await storage('pubkey').fetch(user);
+	if (pubkey) {
+		return pubkey;
 	}
+	socket.emit('query_public_key', user);
+	let res: string[] = await new Promise((accept) => socket.once('public_key', (...res: string[]) => accept(res)));
+	if (res[0] === user) {
+		if (res[1]) {
+			storage('pubkey').store(user, res[1]);
+			return res[1];
+		} else {
+			return false;
+		}
+	} else {
+		return queryPublicKey(user);
+	}
+}
 
-	const { data: encrypted } = await openpgp.encrypt({
+const pubKeyCache = {};
+
+async function getPublicKeyObj(pubkey: string) {
+	if (pubKeyCache[pubkey]) {
+		return pubKeyCache[pubkey];
+	}
+	const [key] = (await openpgp.key.readArmored(pubkey)).keys;
+	if (key) {
+		return pubKeyCache[pubkey] = key;
+	} else return false;
+}
+
+async function sendMessage(to: string, message: unknown): Promise<boolean> {
+	let pubkey = await queryPublicKey(to);
+	if (!pubkey) return;
+
+	const { data: encryptedMessage } = await openpgp.encrypt({
 		message: openpgp.message.fromText(JSON.stringify(message)),
-		publicKeys: (await openpgp.key.readArmored(pubkey)).keys,
+		publicKeys: [ await getPublicKeyObj(pubkey) ],
 		privateKeys: [ instance.keys.key ]
 	});
 
-	socket.emit('message', to, encrypted);
+	const transportedObject = ({
+		sender: instance.username,
+		recipient: to,
+		message: encryptedMessage,
+	});
+
+	const { data: transportMessage } = await openpgp.encrypt({
+		message: openpgp.message.fromText(JSON.stringify(transportedObject)),
+		publicKeys: [ await getPublicKeyObj(pubkey) ],
+		privateKeys: [ instance.keys.key ]
+	});
+
+	socket.emit('message', to, transportMessage);
 	return true;
 }
 
@@ -538,7 +572,7 @@ socket.on('message', async (message: string) => {
 			message: await openpgp.message.readArmored(message),
 			privateKeys: [ instance.keys.key ]
 		});
-		messageEventHandler(decrypted);
+		messageVerifier(JSON.parse(decrypted));
 	} catch(error) {
 		console.log({
 			message, error
@@ -546,8 +580,47 @@ socket.on('message', async (message: string) => {
 	}
 });
 
-function messageEventHandler(message: unknown) {
-	if (typeof message !== 'object') {
-		return console.log(message);
+interface MsgObject {
+	message: string;
+	recipient: string;
+	sender: string;
+}
+
+async function messageVerifier(msgObject: MsgObject) {
+	if (typeof msgObject !== 'object') {
+		return console.log('Anonymous debug message:', msgObject);
+	}
+	let { message, recipient, sender } = msgObject;
+	if (!message || !recipient || !sender) {
+		return console.log('Received invalid message', msgObject);
+	}
+	let pubkey = await queryPublicKey(normalizeUsername(sender));
+	if (!pubkey || (typeof message !== 'string') || (recipient !== instance.username)) {
+		return console.log('Received invalid message', msgObject);
+	}
+
+	try {
+		const { data: decrypted } = await openpgp.decrypt({
+			message: await openpgp.message.readArmored(message),
+			publicKeys: [ await getPublicKeyObj(pubkey) ],
+			privateKeys: [ instance.keys.key ],
+		});
+		messageHandler(sender, JSON.parse(decrypted));
+
+	} catch(error) {
+		console.log({
+			msgObject, message, recipient, sender, error
+		});
+	}
+}
+
+function messageHandler(sender: string, message: any) {
+	console.log('Message received!', {sender, message});
+	if (typeof message === 'string') {
+		// Add message receiver here!
+	} else if (typeof message !== 'object') {
+		console.log('Error: Invalid message received!', {sender, message});
+	} else {
+		// Anything besides plaintext
 	}
 }
