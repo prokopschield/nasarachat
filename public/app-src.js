@@ -145,7 +145,7 @@ function getAsset(asset) {
         });
     });
 }
-var loadedAsset = {};
+var loadedScreen = {};
 function loadAsset(asset, cid) {
     if (cid === void 0) { cid = defaultPageContext; }
     return __awaiter(this, void 0, void 0, function () {
@@ -160,7 +160,7 @@ function loadAsset(asset, cid) {
                     return [4 /*yield*/, getAsset(asset)];
                 case 1:
                     _a.innerHTML = _b.sent();
-                    loadedAsset[cid] = asset;
+                    loadedScreen[cid] = asset;
                     return [2 /*return*/];
             }
         });
@@ -191,6 +191,7 @@ function loadScreen(screen, cid, detail, back) {
                 loadAsset(screen, cid);
             if (back)
                 screenHistory.push([cid, screen, detail]);
+            loadedScreen[cid] = screen;
             return [2 /*return*/];
         });
     });
@@ -254,7 +255,7 @@ var clickListeners = {
     'username': function (ce) {
         setKeyboardListener(function (ke) {
             setTimeout(function () {
-                if (loadedAsset[defaultPageContext] == Context.signup) {
+                if (loadedScreen[defaultPageContext] == Context.signup) {
                     var u = ce.target['value'];
                     socket.emit('check_username_availability', u);
                     socket.once('username_available', function (u, a) {

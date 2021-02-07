@@ -109,14 +109,14 @@ async function getAsset(asset: string) {
 		.then(html => assets[asset] = html);
 }
 
-const loadedAsset = {};
+const loadedScreen = {};
 
 async function loadAsset(asset: string, cid: string = defaultPageContext) {
 	if (!asset.includes('.')) {
 		asset += '.html';
 	}
 	document.querySelector('#' + cid).innerHTML = await getAsset(asset);
-	loadedAsset[cid] = asset;
+	loadedScreen[cid] = asset;
 }
 
 const screenCache = {}
@@ -138,6 +138,7 @@ async function loadScreen(screen: Context, cid: string = defaultPageContext, det
 		loadAsset(screen, cid);
 	
 	if (back) screenHistory.push([cid, screen, detail]);
+	loadedScreen[cid] = screen;
 }
 
 async function goBack() {
@@ -178,7 +179,7 @@ const clickListeners = {
 	'username': (ce: Event) => {
 		setKeyboardListener((ke: Event) => {
 			setTimeout(() => {
-				if (loadedAsset[defaultPageContext] == Context.signup) {
+				if (loadedScreen[defaultPageContext] == Context.signup) {
 					const u: string = ce.target['value'];
 					socket.emit('check_username_availability', u);
 					socket.once('username_available', (u: string, a: string) => {
