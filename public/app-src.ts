@@ -135,10 +135,24 @@ async function loadScreen(screen: Context, cid: string = defaultPageContext, det
 	if (screenCache[cid][screen][detail])
 		screenCache[cid][screen][detail].forEach((e: Element) => ctxElem.appendChild(e));
 	else
-		loadAsset(screen, cid);
+		await loadAsset(screen, cid);
 	
 	if (back) screenHistory.push([cid, screen, detail]);
 	loadedScreen[cid] = screen;
+	if (onScreenLoad[screen]) {
+		await onScreenLoad[screen](screen, cid, detail, back);
+	}
+}
+
+const onScreenLoad = {
+	[Context.main]: async (screen: Context, cid: string = defaultPageContext, detail: string = 'null', back: boolean = true) => {
+		let profile_pic_div: HTMLDivElement = document.querySelector('#profile_pic');
+		if (!profile_pic_div.childNodes.length) {
+			let picture = await get_profile_picture_element(instance.username);
+			picture.classList.add('profile_picture_own');
+			profile_pic_div.appendChild(picture);
+		}
+	}
 }
 
 async function goBack() {
@@ -649,6 +663,17 @@ interface ProfilePictureImageElementList {
 	[username: string]: HTMLImageElement;
 }
 const profile_picture_image_elements: ProfilePictureImageElementList = {};
+
+function get_profile_picture_element(username: string) {
+	if (profile_picture_image_elements[username]) {
+		return profile_picture_image_elements[username];
+	} else {
+		const picture = profile_picture_image_elements[username] = new Image();
+		picture.classList.add('profile_picture');
+		loadProfilePicture(username);
+		return picture;
+	}
+}
 
 async function setProfilePicture(username: string, picture: string): Promise<boolean> {
 	if (typeof username !== 'string') return;

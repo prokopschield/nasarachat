@@ -53,10 +53,11 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             r[k] = a[j];
     return r;
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 var socket_io_client_1 = require("socket.io-client");
 var localforage = require('localforage');
-var _a = require("blakejs"), blake2sInit = _a.blake2sInit, blake2sUpdate = _a.blake2sUpdate, blake2sFinal = _a.blake2sFinal;
+var _b = require("blakejs"), blake2sInit = _b.blake2sInit, blake2sUpdate = _b.blake2sUpdate, blake2sFinal = _b.blake2sFinal;
 var constants = {
     profile_pic: {
         width: 360,
@@ -175,27 +176,63 @@ function loadScreen(screen, cid, detail, back) {
     return __awaiter(this, void 0, void 0, function () {
         var _a, screenLast, detailLast, ctxElem;
         return __generator(this, function (_b) {
-            _a = screenHistory.length ? screenHistory[screenHistory.length - 1] : [, ,], screenLast = _a[1], detailLast = _a[2];
-            if (!screenCache[cid])
-                screenCache[cid] = {};
-            if (!screenCache[cid][screenLast])
-                screenCache[cid][screenLast] = {};
-            ctxElem = document.querySelector("#" + cid);
-            screenCache[cid][screenLast][detailLast] = __spreadArrays(ctxElem.childNodes);
-            screenCache[cid][screenLast][detailLast].forEach(function (e) { return ctxElem.removeChild(e); });
-            if (!screenCache[cid][screen])
-                screenCache[cid][screen] = {};
-            if (screenCache[cid][screen][detail])
-                screenCache[cid][screen][detail].forEach(function (e) { return ctxElem.appendChild(e); });
-            else
-                loadAsset(screen, cid);
-            if (back)
-                screenHistory.push([cid, screen, detail]);
-            loadedScreen[cid] = screen;
-            return [2 /*return*/];
+            switch (_b.label) {
+                case 0:
+                    _a = screenHistory.length ? screenHistory[screenHistory.length - 1] : [, ,], screenLast = _a[1], detailLast = _a[2];
+                    if (!screenCache[cid])
+                        screenCache[cid] = {};
+                    if (!screenCache[cid][screenLast])
+                        screenCache[cid][screenLast] = {};
+                    ctxElem = document.querySelector("#" + cid);
+                    screenCache[cid][screenLast][detailLast] = __spreadArrays(ctxElem.childNodes);
+                    screenCache[cid][screenLast][detailLast].forEach(function (e) { return ctxElem.removeChild(e); });
+                    if (!screenCache[cid][screen])
+                        screenCache[cid][screen] = {};
+                    if (!screenCache[cid][screen][detail]) return [3 /*break*/, 1];
+                    screenCache[cid][screen][detail].forEach(function (e) { return ctxElem.appendChild(e); });
+                    return [3 /*break*/, 3];
+                case 1: return [4 /*yield*/, loadAsset(screen, cid)];
+                case 2:
+                    _b.sent();
+                    _b.label = 3;
+                case 3:
+                    if (back)
+                        screenHistory.push([cid, screen, detail]);
+                    loadedScreen[cid] = screen;
+                    if (!onScreenLoad[screen]) return [3 /*break*/, 5];
+                    return [4 /*yield*/, onScreenLoad[screen](screen, cid, detail, back)];
+                case 4:
+                    _b.sent();
+                    _b.label = 5;
+                case 5: return [2 /*return*/];
+            }
         });
     });
 }
+var onScreenLoad = (_a = {},
+    _a[Context.main] = function (screen, cid, detail, back) {
+        if (cid === void 0) { cid = defaultPageContext; }
+        if (detail === void 0) { detail = 'null'; }
+        if (back === void 0) { back = true; }
+        return __awaiter(void 0, void 0, void 0, function () {
+            var profile_pic_div, picture;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        profile_pic_div = document.querySelector('#profile_pic');
+                        if (!!profile_pic_div.childNodes.length) return [3 /*break*/, 2];
+                        return [4 /*yield*/, get_profile_picture_element(instance.username)];
+                    case 1:
+                        picture = _a.sent();
+                        picture.classList.add('profile_picture_own');
+                        profile_pic_div.appendChild(picture);
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
+    },
+    _a);
 function goBack() {
     return __awaiter(this, void 0, void 0, function () {
         var _a, cid, screen_1, detail;
@@ -844,6 +881,17 @@ function messageHandler(sender, message) {
     });
 }
 var profile_picture_image_elements = {};
+function get_profile_picture_element(username) {
+    if (profile_picture_image_elements[username]) {
+        return profile_picture_image_elements[username];
+    }
+    else {
+        var picture = profile_picture_image_elements[username] = new Image();
+        picture.classList.add('profile_picture');
+        loadProfilePicture(username);
+        return picture;
+    }
+}
 function setProfilePicture(username, picture) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
