@@ -152,7 +152,7 @@ const onScreenLoad = {
 			picture.classList.add('profile_picture_own');
 			profile_pic_div.appendChild(picture);
 		}
-	}
+	},
 }
 
 async function goBack() {
