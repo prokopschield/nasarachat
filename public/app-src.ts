@@ -391,6 +391,7 @@ const clickListeners = {
 				socket.emit('update_profile_pic', instance.username, new_profile_picture);
 				console.log(`Uploaded new profile picture ${new_profile_picture}`);
 				socket.once('confirm_profile_pic', console.log);
+				setProfilePicture(instance.username, new_profile_picture);
 			})
 		}, 'image/jpeg')
 
