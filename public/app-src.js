@@ -793,14 +793,99 @@ function messageVerifier(msgObject) {
     });
 }
 function messageHandler(sender, message) {
-    console.log('Message received!', { sender: sender, message: message });
-    if (typeof message === 'string') {
-        // Add message receiver here!
-    }
-    else if (typeof message !== 'object') {
-        console.log('Error: Invalid message received!', { sender: sender, message: message });
-    }
-    else {
-        // Anything besides plaintext
-    }
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, _b, _c;
+        var _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
+                case 0:
+                    console.log('Message received!', { sender: sender, message: message });
+                    if (!(typeof message === 'string')) return [3 /*break*/, 1];
+                    return [3 /*break*/, 7];
+                case 1:
+                    if (!(typeof message !== 'object')) return [3 /*break*/, 2];
+                    console.log('Error: Invalid message received!', { sender: sender, message: message });
+                    return [3 /*break*/, 7];
+                case 2:
+                    _a = message.type;
+                    switch (_a) {
+                        case 'get_profile_picture': return [3 /*break*/, 3];
+                        case 'set_profile_picture': return [3 /*break*/, 5];
+                    }
+                    return [3 /*break*/, 6];
+                case 3:
+                    _b = sendMessage;
+                    _c = [sender];
+                    _d = {
+                        type: 'set_profile_picture'
+                    };
+                    return [4 /*yield*/, loadProfilePicture(instance.username)];
+                case 4:
+                    _b.apply(void 0, _c.concat([(_d.picture = _e.sent(),
+                            _d)]));
+                    return [3 /*break*/, 7];
+                case 5:
+                    {
+                        if (message.picture) {
+                            setProfilePicture(sender, message.picture);
+                        }
+                        return [3 /*break*/, 7];
+                    }
+                    _e.label = 6;
+                case 6:
+                    {
+                        console.log('Unknown message object received:', __assign({ sender: sender }, message));
+                    }
+                    _e.label = 7;
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+var profile_picture_image_elements = {};
+function setProfilePicture(username, picture) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            if (typeof username !== 'string')
+                return [2 /*return*/];
+            if (typeof picture !== 'string')
+                return [2 /*return*/];
+            username = normalizeUsername(username);
+            if (!picture.match(/[a-f0-9]{64}/))
+                return [2 /*return*/];
+            return [2 /*return*/, storage('profile_picture').store(username, picture)
+                    .then(function (ret) {
+                    if (ret) {
+                        if (profile_picture_image_elements[username]) {
+                            profile_picture_image_elements[username].src = "/user-content/" + username + "/" + picture + ".jpg";
+                            return true;
+                        }
+                    }
+                    return false;
+                })];
+        });
+    });
+}
+function loadProfilePicture(username) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            if (typeof username !== 'string')
+                return [2 /*return*/];
+            username = normalizeUsername(username);
+            return [2 /*return*/, storage('profile_picture').fetch(username)
+                    .then(function (picture) {
+                    if (picture) {
+                        if (profile_picture_image_elements[username]) {
+                            profile_picture_image_elements[username].src = "/user-content/" + username + "/" + picture + ".jpg";
+                            return picture;
+                        }
+                    }
+                    else if (username !== instance.username) {
+                        sendMessage(username, {
+                            type: 'get_profile_picture',
+                        });
+                    }
+                })];
+        });
+    });
 }

@@ -615,7 +615,7 @@ async function messageVerifier(msgObject: MsgObject) {
 	}
 }
 
-function messageHandler(sender: string, message: any) {
+async function messageHandler(sender: string, message: any) {
 	console.log('Message received!', {sender, message});
 	if (typeof message === 'string') {
 		// Add message receiver here!
@@ -623,5 +623,63 @@ function messageHandler(sender: string, message: any) {
 		console.log('Error: Invalid message received!', {sender, message});
 	} else {
 		// Anything besides plaintext
+		switch(message.type) {
+			case 'get_profile_picture': {
+				sendMessage(sender, {
+					type: 'set_profile_picture',
+					picture: await loadProfilePicture(instance.username),
+				});
+				break;
+			}
+			case 'set_profile_picture': {
+				if (message.picture) {
+					setProfilePicture(sender, message.picture);
+				}
+				break;
+			}
+			default: {
+				console.log('Unknown message object received:', {sender, ...message});
+			}
+		}
 	}
+}
+
+interface ProfilePictureImageElementList {
+	[username: string]: HTMLImageElement;
+}
+const profile_picture_image_elements: ProfilePictureImageElementList = {};
+
+async function setProfilePicture(username: string, picture: string): Promise<boolean> {
+	if (typeof username !== 'string') return;
+	if (typeof picture !== 'string') return;
+	username = normalizeUsername(username);
+	if (!picture.match(/[a-f0-9]{64}/)) return;
+	return storage('profile_picture').store(username, picture)
+	.then((ret: boolean) => {
+		if (ret) {
+			if (profile_picture_image_elements[username]) {
+				profile_picture_image_elements[username].src = `/user-content/${username}/${picture}.jpg`;
+				return true;
+			}
+		}
+		return false;
+	})
+}
+
+async function loadProfilePicture(username: string): Promise<string|void> {
+	if (typeof username !== 'string') return;
+	username = normalizeUsername(username);
+	return storage('profile_picture').fetch(username)
+	.then((picture: string | false) => {
+		if (picture) {
+			if (profile_picture_image_elements[username]) {
+				profile_picture_image_elements[username].src = `/user-content/${username}/${picture}.jpg`;
+				return picture;
+			}
+		} else if (username !== instance.username) {
+			sendMessage(username, {
+				type: 'get_profile_picture',
+			});
+		}
+	})
 }
