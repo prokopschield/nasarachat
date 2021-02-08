@@ -217,18 +217,13 @@ var onScreenLoad = (_a = {},
         return __awaiter(void 0, void 0, void 0, function () {
             var profile_pic_div, picture;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        profile_pic_div = document.querySelector('#profile_pic');
-                        if (!!profile_pic_div.childNodes.length) return [3 /*break*/, 2];
-                        return [4 /*yield*/, get_profile_picture_element(instance.username)];
-                    case 1:
-                        picture = _a.sent();
-                        picture.classList.add('profile_picture_own');
-                        profile_pic_div.appendChild(picture);
-                        _a.label = 2;
-                    case 2: return [2 /*return*/];
+                profile_pic_div = document.querySelector('#profile_pic');
+                if (!profile_pic_div.childNodes.length) {
+                    picture = get_profile_picture_element(instance.username);
+                    picture.classList.add('profile_picture_own');
+                    profile_pic_div.appendChild(picture);
                 }
+                return [2 /*return*/];
             });
         });
     },

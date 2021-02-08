@@ -148,7 +148,7 @@ const onScreenLoad = {
 	[Context.main]: async (screen: Context, cid: string = defaultPageContext, detail: string = 'null', back: boolean = true) => {
 		let profile_pic_div: HTMLDivElement = document.querySelector('#profile_pic');
 		if (!profile_pic_div.childNodes.length) {
-			let picture = await get_profile_picture_element(instance.username);
+			let picture = get_profile_picture_element(instance.username);
 			picture.classList.add('profile_picture_own');
 			profile_pic_div.appendChild(picture);
 		}
