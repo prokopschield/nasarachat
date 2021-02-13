@@ -3,7 +3,7 @@
 		"commands": [
 			{
 				"match": "\\.ts",
-				"cmd": "tsc --target ES5 ${file}"
+				"cmd": "tsc --target ES5 --module CommonJS --moduleResolution node ${file}"
 			},
 			{
 				"match": "app-src\\.ts",
