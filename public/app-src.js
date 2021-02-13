@@ -467,75 +467,8 @@ var clickListeners = {
             }
         });
     }); },
-    'profile_pic': function (ce) {
-        return __awaiter(this, void 0, void 0, function () {
-            var image_select_element, file, image, canvas, ctx, ratio, width, height, ocanvas, octx;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        image_select_element = document.createElement('input');
-                        image_select_element.type = 'file';
-                        image_select_element.click();
-                        return [4 /*yield*/, new Promise(function (accept) {
-                                image_select_element.onchange = function (e) {
-                                    accept(file = e.target['files'][0]);
-                                };
-                            }).catch(console.log)];
-                    case 1:
-                        _a.sent();
-                        if (!file)
-                            return [2 /*return*/];
-                        image = new Image();
-                        image.crossOrigin = 'Anonymous';
-                        return [4 /*yield*/, new Promise(function (accept) {
-                                var reader = new FileReader();
-                                reader.onload = function (readerEvent) {
-                                    accept(image.src = readerEvent.target.result.toString());
-                                };
-                                reader.readAsDataURL(file);
-                            }).catch(console.log)];
-                    case 2:
-                        _a.sent();
-                        return [4 /*yield*/, new Promise(function (accept) { return image.onload = accept; })];
-                    case 3:
-                        _a.sent();
-                        canvas = document.createElement('canvas');
-                        ctx = canvas.getContext('2d');
-                        ratio = image.height / image.width;
-                        if (ratio > 1.5) {
-                            height = Math.min(image.height, constants.profile_pic.height);
-                            width = height / ratio;
-                        }
-                        else {
-                            width = Math.min(image.width, constants.profile_pic.width);
-                            height = width * ratio;
-                        }
-                        canvas.height = height;
-                        canvas.width = width;
-                        ocanvas = document.createElement('canvas');
-                        octx = ocanvas.getContext('2d');
-                        ocanvas.width = image.width;
-                        ocanvas.height = image.height;
-                        octx.drawImage(image, 0, 0, ocanvas.width, ocanvas.height);
-                        ctx.drawImage(ocanvas, 0, 0, ocanvas.width, ocanvas.height, 0, 0, canvas.width, canvas.height);
-                        canvas.toBlob(function (blob) {
-                            fetch("/user-content/" + instance.username + "/profile.jpeg", {
-                                method: 'PUT',
-                                body: blob
-                            })
-                                .then(function (response) { return response.text(); })
-                                .then(function (new_profile_picture) {
-                                socket.emit('update_profile_pic', instance.username, new_profile_picture);
-                                console.log("Uploaded new profile picture " + new_profile_picture);
-                                socket.once('confirm_profile_pic', console.log);
-                                setProfilePicture(instance.username, new_profile_picture);
-                            });
-                        }, 'image/jpeg');
-                        return [2 /*return*/];
-                }
-            });
-        });
-    },
+    'profile_pic': profilePictureDialog,
+    pic: profilePictureDialog,
     back: goBack,
     page: function () { },
 };
@@ -587,6 +520,7 @@ window['nasara'] = {
     loadAsset: loadScreen,
     keyfn: keyfn,
     sendMessage: sendMessage,
+    profilePictureDialog: profilePictureDialog,
 };
 var forageInstances = {};
 function storage(name) {
@@ -930,6 +864,75 @@ function loadProfilePicture(username) {
                         });
                     }
                 })];
+        });
+    });
+}
+function profilePictureDialog(ce) {
+    return __awaiter(this, void 0, void 0, function () {
+        var image_select_element, file, image, canvas, ctx, ratio, width, height, ocanvas, octx;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    image_select_element = document.createElement('input');
+                    image_select_element.type = 'file';
+                    image_select_element.click();
+                    return [4 /*yield*/, new Promise(function (accept) {
+                            image_select_element.onchange = function (e) {
+                                accept(file = e.target['files'][0]);
+                            };
+                        }).catch(console.log)];
+                case 1:
+                    _a.sent();
+                    if (!file)
+                        return [2 /*return*/];
+                    image = new Image();
+                    image.crossOrigin = 'Anonymous';
+                    return [4 /*yield*/, new Promise(function (accept) {
+                            var reader = new FileReader();
+                            reader.onload = function (readerEvent) {
+                                accept(image.src = readerEvent.target.result.toString());
+                            };
+                            reader.readAsDataURL(file);
+                        }).catch(console.log)];
+                case 2:
+                    _a.sent();
+                    return [4 /*yield*/, new Promise(function (accept) { return image.onload = accept; })];
+                case 3:
+                    _a.sent();
+                    canvas = document.createElement('canvas');
+                    ctx = canvas.getContext('2d');
+                    ratio = image.height / image.width;
+                    if (ratio > 1.5) {
+                        height = Math.min(image.height, constants.profile_pic.height);
+                        width = height / ratio;
+                    }
+                    else {
+                        width = Math.min(image.width, constants.profile_pic.width);
+                        height = width * ratio;
+                    }
+                    canvas.height = height;
+                    canvas.width = width;
+                    ocanvas = document.createElement('canvas');
+                    octx = ocanvas.getContext('2d');
+                    ocanvas.width = image.width;
+                    ocanvas.height = image.height;
+                    octx.drawImage(image, 0, 0, ocanvas.width, ocanvas.height);
+                    ctx.drawImage(ocanvas, 0, 0, ocanvas.width, ocanvas.height, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(function (blob) {
+                        fetch("/user-content/" + instance.username + "/profile.jpeg", {
+                            method: 'PUT',
+                            body: blob
+                        })
+                            .then(function (response) { return response.text(); })
+                            .then(function (new_profile_picture) {
+                            socket.emit('update_profile_pic', instance.username, new_profile_picture);
+                            console.log("Uploaded new profile picture " + new_profile_picture);
+                            socket.once('confirm_profile_pic', console.log);
+                            setProfilePicture(instance.username, new_profile_picture);
+                        });
+                    }, 'image/jpeg');
+                    return [2 /*return*/];
+            }
         });
     });
 }
