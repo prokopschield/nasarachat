@@ -165,7 +165,7 @@ async function goBack() {
 			await loadScreen(Context.main, 'page', 'goBack');
 		}
 	} else if (screenHistory.length && (screenHistory[screenHistory.length - 1][2] !== 'goBack')) {
-		await loadScreen(Context.signin, 'page', 'goBack', false);
+		await loadScreen(Context.signin, 'page', 'goBack');
 	}
 }
 

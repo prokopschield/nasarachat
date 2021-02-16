@@ -251,7 +251,7 @@ function goBack() {
                 case 4: return [3 /*break*/, 7];
                 case 5:
                     if (!(screenHistory.length && (screenHistory[screenHistory.length - 1][2] !== 'goBack'))) return [3 /*break*/, 7];
-                    return [4 /*yield*/, loadScreen(Context.signin, 'page', 'goBack', false)];
+                    return [4 /*yield*/, loadScreen(Context.signin, 'page', 'goBack')];
                 case 6:
                     _b.sent();
                     _b.label = 7;
