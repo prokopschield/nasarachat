@@ -24,6 +24,8 @@ Uint8Array.prototype['toHex'] = function() {
 }
 
 const openpgp:any = window['openpgp'];
+const showdown:any = window['showdown'];
+const converter:any = window['converter'] = new showdown.Converter();
 
 const defaultPageContext = 'page';
 
@@ -358,6 +360,55 @@ const clickListeners = {
 	back: goBack,
 	
 	page () {}, // no action needed when user simply clicks the background
+
+	async find_people () {
+		await loadScreen(Context.search);
+		const searchbox: HTMLTextAreaElement = document.querySelector('#searchpeople');
+		setKeyboardListener((e: KeyboardEvent) => {
+			setTimeout(() => {
+				socket.emit('users-suggest', searchbox.value);
+				socket.once('users-suggest', (list: string[]) => {
+					const sresl = document.querySelector('#search_scroll');
+					for (let i=0; i<list.length; ++i) {
+						const ename = `user-suggestion-${i}`;
+						const el: HTMLDivElement = sresl.querySelector(`#${ename}`);
+						if (el) {
+							el.querySelector('.user-suggestion-username').innerHTML = list[i];
+						} else {
+							const div = document.createElement('div');
+							div.id = ename;
+							div.className = 'user-suggestion';
+							const span = document.createElement('span');
+							span.className = 'user-suggestion-username';
+							span.innerHTML = list[i];
+							div.appendChild(span);
+							sresl.appendChild(div);
+						}
+						clickListeners[ename] = async () => {
+							await startChatWith(list[i]);
+							setKeyboardListener(() => {});
+						}
+					}
+				});
+			}, 100);
+		});
+	},
+
+	newchat () {
+		clickListeners.find_people();
+	},
+
+	chatscreen: startChatWith,
+
+	send () {
+		const textelem: HTMLInputElement = document.querySelector('#text');
+		const text = textelem.value.trim();
+		if (text) {
+			add_chat_message(lastChatPerson, false, text);
+			sendMessage(lastChatPerson, text);
+		}
+		textelem.value = '';
+	}
 };
 
 const bindings = {
@@ -429,6 +480,7 @@ window['nasara'] = {
 	keyfn,
 	sendMessage,
 	profilePictureDialog,
+	add_chat_message,
 }
 
 const forageInstances = {};
@@ -579,6 +631,7 @@ async function messageHandler(sender: string, message: any) {
 	console.log('Message received!', {sender, message});
 	if (typeof message === 'string') {
 		// Add message receiver here!
+		add_chat_message(sender, true, message);
 	} else if (typeof message !== 'object') {
 		console.log('Error: Invalid message received!', {sender, message});
 	} else {
@@ -714,4 +767,81 @@ async function profilePictureDialog (ce: Event) {
 		})
 	}, 'image/jpeg')
 
+}
+
+let lastChatPerson = '';
+async function startChatWith (user: string = lastChatPerson) {
+	if (typeof user !== 'string') {
+		user = lastChatPerson;
+	}
+	if (!user) {
+		return loadScreen(Context.chats);
+	}
+	lastChatPerson = user;
+	await loadScreen(Context.chatscreen, defaultPageContext, user);
+	document.querySelector('#Chatname').innerHTML = user;
+	const piceld = document.querySelector('#chat_picture');
+	for (const child of piceld.childNodes) {
+		piceld.removeChild(child);
+	}
+	piceld.appendChild(get_profile_picture_element(user));
+	await loadProfilePicture(user);
+}
+
+const url_converter_cache: {
+	[url: string]: string;
+} = {};
+
+async function get_uri_conversion (uri: string): Promise<string> {
+	return `/user-content/external/${url_converter_cache[uri] || await request_uri_conversion(uri)}`;
+}
+
+async function request_uri_conversion (uri: string) {
+	socket.emit('request-external-resource', uri);
+	return expect_uri_conversion(uri);
+}
+
+async function expect_uri_conversion (uri: string): Promise<string> {
+	return url_converter_cache[uri] || new Promise (resolve => socket.once('declare-external-resource', (ruri: string, hash: string) => {
+		if (url_converter_cache[uri]) return resolve(url_converter_cache[uri]);
+		if (uri === ruri) {
+			resolve(url_converter_cache[uri] = hash);
+		} else {
+			expect_uri_conversion(uri).then(resolve);
+		}
+	}));
+}
+
+function clean_uri (uri: string) {
+	return uri.replace(/[^a-z0-9]/gi, (m: string) => `&#${m.charCodeAt(0)};`);
+}
+
+async function add_chat_message (user: string, received: boolean, message: string) {
+	var messagesDiv: HTMLDivElement;
+	if (user === lastChatPerson) {
+		messagesDiv = document.querySelector('#chatscreen_scroll');
+	} else if (screenCache[defaultPageContext]?.[Context.chatscreen]?.[user]) {
+		messagesDiv = screenCache[defaultPageContext][Context.chatscreen][user].querySelector('#chatscreen_scroll');
+	} else {
+		await startChatWith(user);
+		messagesDiv = document.querySelector('#chatscreen_scroll');
+	}
+	const match1 = message.match(/\(?https?\:\/\/[^ \)]*\)?/gi);
+	const match2 = message.match(/\([^\(]+\:[^\)]+\)/gi);
+	const URIs = (match1?.length) ? ((match2?.length) ? [...match1, ...match2] : match1) : match2 || [];
+	await Promise.all(URIs.map(async (uri) => {
+		while (uri[0] === '(') uri = uri.substr(1);
+		while (uri[uri.length - 1] === ')') uri = uri.substr(0, uri.length - 1);
+		const localuri = await get_uri_conversion(uri);
+		while (message.includes(uri)) {
+			message = message.replace(`](${uri})`, `](${localuri})`);
+			message = message.replace(uri, `[${clean_uri(uri)}](${localuri})`);
+		}
+	}));
+	message = message.replace(/[\<\>]/gi, (m: string) => `&#${m.charCodeAt(0)};`);
+	const message_span = document.createElement('span');
+	message_span.className = `chat_message ${received ? 'chat_message_left' : 'chat_message_right'}`;
+	const html = converter.makeHtml(message);
+	message_span.innerHTML = html;
+	messagesDiv.appendChild(message_span);
 }

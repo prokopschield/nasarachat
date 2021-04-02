@@ -35,9 +35,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var blakejs_1 = require("blakejs");
 var fs_1 = require("fs");
+var https_1 = __importDefault(require("https"));
+var stream_1 = require("stream");
+var zlib_1 = __importDefault(require("zlib"));
 Uint8Array.prototype['toHex'] = function () {
     var a = '0123456789abcdef';
     var o = '';
@@ -99,7 +105,7 @@ var requestHandler = function (req, res) { return __awaiter(void 0, void 0, void
         }
     });
 }); };
-var httpserver = require('https').createServer({
+var httpserver = https_1.default.createServer({
     cert: fs_1.readFileSync('/etc/letsencrypt/live/nasarachat.eu/fullchain.pem'),
     key: fs_1.readFileSync('/etc/letsencrypt/live/nasarachat.eu/privkey.pem')
 }, requestHandler);
@@ -275,6 +281,59 @@ io.on('connection', function (socket) {
         else {
             socket.emit('public_key', username, false);
         }
+    });
+    socket.on('message-forward', function (recipient, sender, data) {
+        recipient = normalizeUsername(recipient);
+        sender = normalizeUsername(sender);
+        if (userSockets[recipient]) {
+            userSockets[recipient].emit('message-forward', sender, data);
+        }
+    });
+    socket.on('users-suggest', function (name) {
+        var users = Object.keys(userSockets);
+        var user = normalizeUsername(name);
+        if (!user)
+            return;
+        socket.emit('users-suggest', users.filter(function (a) { return a.includes(user); }).slice(0, 7));
+    });
+    socket.on('request-external-resource', function (uri) {
+        try {
+            if (typeof uri !== 'string') {
+                return socket.emit('type-error');
+            }
+            var wr_1 = https_1.default.request('https://nasarachat.eu/user-content/external/upload', {
+                method: 'PUT',
+            }, function (res) {
+                var b = '';
+                res.on('data', function (d) { return b += d; });
+                res.on('end', function () {
+                    if (b.length === 64) {
+                        socket.emit('declare-external-resource', uri, b);
+                    }
+                    else {
+                        socket.emit('declare-external-resource', uri, false);
+                    }
+                });
+            });
+            var rr = https_1.default.request(uri, (function (res) {
+                switch (res.headers['content-encoding']) {
+                    case 'br':
+                        stream_1.pipeline(res, zlib_1.default.createBrotliDecompress(), wr_1, console.log);
+                        break;
+                    case 'gzip':
+                        stream_1.pipeline(res, zlib_1.default.createGunzip(), wr_1, console.log);
+                        break;
+                    case 'deflate':
+                        stream_1.pipeline(res, zlib_1.default.createInflate(), wr_1, console.log);
+                        break;
+                    default:
+                        stream_1.pipeline(res, wr_1, console.log);
+                        break;
+                }
+            }));
+            rr.end();
+        }
+        catch (e) { }
     });
 });
 var nodemailer = require('nodemailer');

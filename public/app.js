@@ -75,6 +75,8 @@ Uint8Array.prototype['toHex'] = function () {
     return o;
 };
 var openpgp = window['openpgp'];
+var showdown = window['showdown'];
+var converter = window['converter'] = new showdown.Converter();
 var defaultPageContext = 'page';
 var Context;
 (function (Context) {
@@ -473,6 +475,73 @@ var clickListeners = {
     pic: profilePictureDialog,
     back: goBack,
     page: function () { },
+    find_people: function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var searchbox;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, loadScreen(Context.search)];
+                    case 1:
+                        _a.sent();
+                        searchbox = document.querySelector('#searchpeople');
+                        setKeyboardListener(function (e) {
+                            setTimeout(function () {
+                                socket.emit('users-suggest', searchbox.value);
+                                socket.once('users-suggest', function (list) {
+                                    var sresl = document.querySelector('#search_scroll');
+                                    var _loop_1 = function (i) {
+                                        var ename = "user-suggestion-" + i;
+                                        var el = sresl.querySelector("#" + ename);
+                                        if (el) {
+                                            el.querySelector('.user-suggestion-username').innerHTML = list[i];
+                                        }
+                                        else {
+                                            var div = document.createElement('div');
+                                            div.id = ename;
+                                            div.className = 'user-suggestion';
+                                            var span = document.createElement('span');
+                                            span.className = 'user-suggestion-username';
+                                            span.innerHTML = list[i];
+                                            div.appendChild(span);
+                                            sresl.appendChild(div);
+                                        }
+                                        clickListeners[ename] = function () { return __awaiter(_this, void 0, void 0, function () {
+                                            return __generator(this, function (_a) {
+                                                switch (_a.label) {
+                                                    case 0: return [4 /*yield*/, startChatWith(list[i])];
+                                                    case 1:
+                                                        _a.sent();
+                                                        setKeyboardListener(function () { });
+                                                        return [2 /*return*/];
+                                                }
+                                            });
+                                        }); };
+                                    };
+                                    for (var i = 0; i < list.length; ++i) {
+                                        _loop_1(i);
+                                    }
+                                });
+                            }, 100);
+                        });
+                        return [2 /*return*/];
+                }
+            });
+        });
+    },
+    newchat: function () {
+        clickListeners.find_people();
+    },
+    chatscreen: startChatWith,
+    send: function () {
+        var textelem = document.querySelector('#text');
+        var text = textelem.value.trim();
+        if (text) {
+            add_chat_message(lastChatPerson, false, text);
+            sendMessage(lastChatPerson, text);
+        }
+        textelem.value = '';
+    }
 };
 var bindings = __assign({ 
     // main screen
@@ -523,6 +592,7 @@ window['nasara'] = {
     keyfn: keyfn,
     sendMessage: sendMessage,
     profilePictureDialog: profilePictureDialog,
+    add_chat_message: add_chat_message,
 };
 var forageInstances = {};
 function storage(name) {
@@ -770,6 +840,8 @@ function messageHandler(sender, message) {
                 case 0:
                     console.log('Message received!', { sender: sender, message: message });
                     if (!(typeof message === 'string')) return [3 /*break*/, 1];
+                    // Add message receiver here!
+                    add_chat_message(sender, true, message);
                     return [3 /*break*/, 7];
                 case 1:
                     if (!(typeof message !== 'object')) return [3 /*break*/, 2];
@@ -933,6 +1005,142 @@ function profilePictureDialog(ce) {
                             setProfilePicture(instance.username, new_profile_picture);
                         });
                     }, 'image/jpeg');
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+var lastChatPerson = '';
+function startChatWith(user) {
+    if (user === void 0) { user = lastChatPerson; }
+    return __awaiter(this, void 0, void 0, function () {
+        var piceld, _i, _a, child;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (typeof user !== 'string') {
+                        user = lastChatPerson;
+                    }
+                    if (!user) {
+                        return [2 /*return*/, loadScreen(Context.chats)];
+                    }
+                    lastChatPerson = user;
+                    return [4 /*yield*/, loadScreen(Context.chatscreen, defaultPageContext, user)];
+                case 1:
+                    _b.sent();
+                    document.querySelector('#Chatname').innerHTML = user;
+                    piceld = document.querySelector('#chat_picture');
+                    for (_i = 0, _a = piceld.childNodes; _i < _a.length; _i++) {
+                        child = _a[_i];
+                        piceld.removeChild(child);
+                    }
+                    piceld.appendChild(get_profile_picture_element(user));
+                    return [4 /*yield*/, loadProfilePicture(user)];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+var url_converter_cache = {};
+function get_uri_conversion(uri) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _a = "/user-content/external/";
+                    _b = url_converter_cache[uri];
+                    if (_b) return [3 /*break*/, 2];
+                    return [4 /*yield*/, request_uri_conversion(uri)];
+                case 1:
+                    _b = (_c.sent());
+                    _c.label = 2;
+                case 2: return [2 /*return*/, _a + (_b)];
+            }
+        });
+    });
+}
+function request_uri_conversion(uri) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            socket.emit('request-external-resource', uri);
+            return [2 /*return*/, expect_uri_conversion(uri)];
+        });
+    });
+}
+function expect_uri_conversion(uri) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            return [2 /*return*/, url_converter_cache[uri] || new Promise(function (resolve) { return socket.once('declare-external-resource', function (ruri, hash) {
+                    if (url_converter_cache[uri])
+                        return resolve(url_converter_cache[uri]);
+                    if (uri === ruri) {
+                        resolve(url_converter_cache[uri] = hash);
+                    }
+                    else {
+                        expect_uri_conversion(uri).then(resolve);
+                    }
+                }); })];
+        });
+    });
+}
+function clean_uri(uri) {
+    return uri.replace(/[^a-z0-9]/gi, function (m) { return "&#" + m.charCodeAt(0) + ";"; });
+}
+function add_chat_message(user, received, message) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function () {
+        var messagesDiv, match1, match2, URIs, message_span, html;
+        var _this = this;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    if (!(user === lastChatPerson)) return [3 /*break*/, 1];
+                    messagesDiv = document.querySelector('#chatscreen_scroll');
+                    return [3 /*break*/, 4];
+                case 1:
+                    if (!((_b = (_a = screenCache[defaultPageContext]) === null || _a === void 0 ? void 0 : _a[Context.chatscreen]) === null || _b === void 0 ? void 0 : _b[user])) return [3 /*break*/, 2];
+                    messagesDiv = screenCache[defaultPageContext][Context.chatscreen][user].querySelector('#chatscreen_scroll');
+                    return [3 /*break*/, 4];
+                case 2: return [4 /*yield*/, startChatWith(user)];
+                case 3:
+                    _c.sent();
+                    messagesDiv = document.querySelector('#chatscreen_scroll');
+                    _c.label = 4;
+                case 4:
+                    match1 = message.match(/\(?https?\:\/\/[^ \)]*\)?/gi);
+                    match2 = message.match(/\([^\(]+\:[^\)]+\)/gi);
+                    URIs = (match1 === null || match1 === void 0 ? void 0 : match1.length) ? ((match2 === null || match2 === void 0 ? void 0 : match2.length) ? __spreadArrays(match1, match2) : match1) : match2 || [];
+                    return [4 /*yield*/, Promise.all(URIs.map(function (uri) { return __awaiter(_this, void 0, void 0, function () {
+                            var localuri;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        while (uri[0] === '(')
+                                            uri = uri.substr(1);
+                                        while (uri[uri.length - 1] === ')')
+                                            uri = uri.substr(0, uri.length - 1);
+                                        return [4 /*yield*/, get_uri_conversion(uri)];
+                                    case 1:
+                                        localuri = _a.sent();
+                                        while (message.includes(uri)) {
+                                            message = message.replace("](" + uri + ")", "](" + localuri + ")");
+                                            message = message.replace(uri, "[" + clean_uri(uri) + "](" + localuri + ")");
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); }))];
+                case 5:
+                    _c.sent();
+                    message = message.replace(/[\<\>]/gi, function (m) { return "&#" + m.charCodeAt(0) + ";"; });
+                    message_span = document.createElement('span');
+                    message_span.className = "chat_message " + (received ? 'chat_message_left' : 'chat_message_right');
+                    html = converter.makeHtml(message);
+                    message_span.innerHTML = html;
+                    messagesDiv.appendChild(message_span);
                     return [2 /*return*/];
             }
         });

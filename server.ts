@@ -1,5 +1,9 @@
 import {blake2sInit, blake2sUpdate, blake2sFinal} from "blakejs";
 import { readFileSync, writeFileSync } from "fs";
+import { IncomingMessage, ServerResponse } from "http";
+import https from 'https';
+import { pipeline } from 'stream';
+import zlib from 'zlib';
 
 Uint8Array.prototype['toHex'] = function() {
 	const a = '0123456789abcdef';
@@ -31,7 +35,7 @@ function hash(...args: Array<any>) {
 	return blake2sFinal(c)['toHex']();
 }
 
-const requestHandler = async (req: Request, res: Response) => {
+const requestHandler = async (req: IncomingMessage, res: ServerResponse) => {
 	if (req.url.length > 54) {
 		let fn = req.url.substr(req.url.length - 54);
 		if (awaiters[fn]) {
@@ -48,7 +52,7 @@ const requestHandler = async (req: Request, res: Response) => {
 	}
 }
 
-const httpserver = require('https').createServer({
+const httpserver = https.createServer({
 	cert: readFileSync('/etc/letsencrypt/live/nasarachat.eu/fullchain.pem'),
 	key: readFileSync('/etc/letsencrypt/live/nasarachat.eu/privkey.pem')
 }, requestHandler);
@@ -213,6 +217,59 @@ io.on('connection', (socket: any) => {
 		} else {
 			socket.emit('public_key', username, false);
 		}
+	});
+
+	socket.on('message-forward', (recipient: string, sender: string, data: any) => {
+		recipient = normalizeUsername(recipient);
+		sender = normalizeUsername(sender);
+		if (userSockets[recipient]) {
+			userSockets[recipient].emit('message-forward', sender, data);
+		}
+	});
+
+	socket.on('users-suggest', (name: string) => {
+		let users = Object.keys(userSockets);
+		let user = normalizeUsername(name);
+		if (!user) return;
+		socket.emit('users-suggest', users.filter(a => a.includes(user)).slice(0, 7));
+	});
+
+	socket.on('request-external-resource', (uri: string) => {
+		try {
+			if (typeof uri !== 'string') {
+				return socket.emit('type-error');
+			}
+			const wr = https.request('https://nasarachat.eu/user-content/external/upload', {
+				method: 'PUT',
+			}, (res) => {
+				let b = '';
+				res.on('data', d => b += d);
+				res.on('end', () => {
+					if (b.length === 64) {
+						socket.emit('declare-external-resource', uri, b);
+					} else {
+						socket.emit('declare-external-resource', uri, false);
+					}
+				});
+			});
+			const rr = https.request(uri, (res => {
+				switch(res.headers['content-encoding']) {
+					case 'br':
+						pipeline(res, zlib.createBrotliDecompress(), wr, console.log);
+						break;
+					case 'gzip':
+						pipeline(res, zlib.createGunzip(), wr, console.log);
+						break;
+					case 'deflate':
+						pipeline(res, zlib.createInflate(), wr, console.log);
+						break;
+					default:
+						pipeline(res, wr, console.log);
+						break;
+				}
+			}));
+			rr.end();
+		} catch (e) {}
 	});
 });
 
