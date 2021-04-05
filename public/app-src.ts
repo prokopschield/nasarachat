@@ -51,6 +51,14 @@ enum Context {
 	profilepic = 'profilepic.html',
 }
 
+enum ON_SCREEN_ELEMENTS {
+	SEND_MESSAGE_BUTTON = 'send',
+}
+
+function getOnScreenElement(element: string): Element|null {
+	return document.querySelector(`#${element}`);
+}
+
 function hash(...args: Array<any>) {
 	const c = blake2sInit(27);
 	for (const a in arguments) {
@@ -386,7 +394,6 @@ const clickListeners = {
 						}
 						clickListeners[ename] = async () => {
 							await startChatWith(list[i]);
-							setKeyboardListener(() => {});
 						}
 					}
 				});
@@ -795,6 +802,11 @@ async function profilePictureDialog (ce: Event) {
 
 let lastChatPerson = '';
 async function startChatWith (user: string = lastChatPerson) {
+	setKeyboardListener((e: KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			getOnScreenElement(ON_SCREEN_ELEMENTS.SEND_MESSAGE_BUTTON)?.['click']?.();
+		}
+	});
 	if (typeof user !== 'string') {
 		user = lastChatPerson;
 	}

@@ -95,6 +95,13 @@ var Context;
     Context["takephoto"] = "takephoto.html";
     Context["profilepic"] = "profilepic.html";
 })(Context || (Context = {}));
+var ON_SCREEN_ELEMENTS;
+(function (ON_SCREEN_ELEMENTS) {
+    ON_SCREEN_ELEMENTS["SEND_MESSAGE_BUTTON"] = "send";
+})(ON_SCREEN_ELEMENTS || (ON_SCREEN_ELEMENTS = {}));
+function getOnScreenElement(element) {
+    return document.querySelector("#" + element);
+}
 function hash() {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -508,7 +515,6 @@ var clickListeners = {
                                                     case 0: return [4 /*yield*/, startChatWith(list[i])];
                                                     case 1:
                                                         _a.sent();
-                                                        setKeyboardListener(function () { });
                                                         return [2 /*return*/];
                                                 }
                                             });
@@ -1046,6 +1052,12 @@ function startChatWith(user) {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    setKeyboardListener(function (e) {
+                        var _a, _b;
+                        if (e.key === 'Enter') {
+                            (_b = (_a = getOnScreenElement(ON_SCREEN_ELEMENTS.SEND_MESSAGE_BUTTON)) === null || _a === void 0 ? void 0 : _a['click']) === null || _b === void 0 ? void 0 : _b.call(_a);
+                        }
+                    });
                     if (typeof user !== 'string') {
                         user = lastChatPerson;
                     }
