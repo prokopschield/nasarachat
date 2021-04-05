@@ -408,7 +408,31 @@ const clickListeners = {
 			sendMessage(lastChatPerson, text);
 		}
 		textelem.value = '';
-	}
+	},
+
+	async image (ce: Event) {
+		let image_select_element = document.createElement('input');
+		image_select_element.type = 'file';
+		image_select_element.click();
+		let file: File;
+		await new Promise((accept) => {
+			image_select_element.onchange = (e) => {
+				accept(file = e.target['files'][0]);
+			}
+		}).catch(console.log);
+		
+		if (!file) return;
+
+		fetch(`/user-content/${instance.username}/chat-image.jpg`, {
+			method: 'PUT',
+			body: file
+		})
+		.then(response => response.text())
+		.then((picture_hash) => {
+			add_chat_message(lastChatPerson, false, `![Image you sent](/user-content/chat-image.jpg?img=${picture_hash})`);
+			sendMessage(lastChatPerson, `![Image from ${instance.username}](/user-content/chat-image.jpg?img=${picture_hash})`);
+		});
+	},
 };
 
 const bindings = {

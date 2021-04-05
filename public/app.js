@@ -48,12 +48,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -188,7 +186,7 @@ function loadScreen(screen, cid, detail, back) {
                     if (!screenCache[cid][screenLast])
                         screenCache[cid][screenLast] = {};
                     ctxElem = document.querySelector("#" + cid);
-                    screenCache[cid][screenLast][detailLast] = __spreadArrays(ctxElem.childNodes);
+                    screenCache[cid][screenLast][detailLast] = __spreadArray([], ctxElem.childNodes);
                     screenCache[cid][screenLast][detailLast].forEach(function (e) { return ctxElem.removeChild(e); });
                     if (!screenCache[cid][screen])
                         screenCache[cid][screen] = {};
@@ -541,7 +539,39 @@ var clickListeners = {
             sendMessage(lastChatPerson, text);
         }
         textelem.value = '';
-    }
+    },
+    image: function (ce) {
+        return __awaiter(this, void 0, void 0, function () {
+            var image_select_element, file;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        image_select_element = document.createElement('input');
+                        image_select_element.type = 'file';
+                        image_select_element.click();
+                        return [4 /*yield*/, new Promise(function (accept) {
+                                image_select_element.onchange = function (e) {
+                                    accept(file = e.target['files'][0]);
+                                };
+                            }).catch(console.log)];
+                    case 1:
+                        _a.sent();
+                        if (!file)
+                            return [2 /*return*/];
+                        fetch("/user-content/" + instance.username + "/chat-image.jpg", {
+                            method: 'PUT',
+                            body: file
+                        })
+                            .then(function (response) { return response.text(); })
+                            .then(function (picture_hash) {
+                            add_chat_message(lastChatPerson, false, "![Image you sent](/user-content/chat-image.jpg?img=" + picture_hash + ")");
+                            sendMessage(lastChatPerson, "![Image from " + instance.username + "](/user-content/chat-image.jpg?img=" + picture_hash + ")");
+                        });
+                        return [2 /*return*/];
+                }
+            });
+        });
+    },
 };
 var bindings = __assign({ 
     // main screen
@@ -1112,7 +1142,7 @@ function add_chat_message(user, received, message) {
                 case 4:
                     match1 = message.match(/\(?https?\:\/\/[^ \)]*\)?/gi);
                     match2 = message.match(/\([^\(]+\:[^\)]+\)/gi);
-                    URIs = (match1 === null || match1 === void 0 ? void 0 : match1.length) ? ((match2 === null || match2 === void 0 ? void 0 : match2.length) ? __spreadArrays(match1, match2) : match1) : match2 || [];
+                    URIs = (match1 === null || match1 === void 0 ? void 0 : match1.length) ? ((match2 === null || match2 === void 0 ? void 0 : match2.length) ? __spreadArray(__spreadArray([], match1), match2) : match1) : match2 || [];
                     return [4 /*yield*/, Promise.all(URIs.map(function (uri) { return __awaiter(_this, void 0, void 0, function () {
                             var localuri;
                             return __generator(this, function (_a) {
