@@ -842,11 +842,13 @@ function clean_uri (uri: string) {
 
 async function add_chat_message (user: string, received: boolean, message: string) {
 	var messagesDiv: HTMLDivElement;
+	var goBackTo: string;
 	if (user === lastChatPerson) {
 		messagesDiv = document.querySelector('#chatscreen_scroll');
 	} else if (screenCache[defaultPageContext]?.[Context.chatscreen]?.[user]) {
 		messagesDiv = screenCache[defaultPageContext][Context.chatscreen][user].querySelector('#chatscreen_scroll');
 	} else {
+		goBackTo = lastChatPerson;
 		await startChatWith(user);
 		messagesDiv = document.querySelector('#chatscreen_scroll');
 	}
@@ -868,4 +870,8 @@ async function add_chat_message (user: string, received: boolean, message: strin
 	const html = converter.makeHtml(message);
 	message_span.innerHTML = html;
 	messagesDiv.appendChild(message_span);
+	if (goBackTo) {
+		goBack();
+		startChatWith(goBackTo);
+	}
 }

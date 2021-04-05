@@ -1122,7 +1122,7 @@ function clean_uri(uri) {
 function add_chat_message(user, received, message) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var messagesDiv, match1, match2, URIs, message_span, html;
+        var messagesDiv, goBackTo, match1, match2, URIs, message_span, html;
         var _this = this;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -1134,7 +1134,9 @@ function add_chat_message(user, received, message) {
                     if (!((_b = (_a = screenCache[defaultPageContext]) === null || _a === void 0 ? void 0 : _a[Context.chatscreen]) === null || _b === void 0 ? void 0 : _b[user])) return [3 /*break*/, 2];
                     messagesDiv = screenCache[defaultPageContext][Context.chatscreen][user].querySelector('#chatscreen_scroll');
                     return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, startChatWith(user)];
+                case 2:
+                    goBackTo = lastChatPerson;
+                    return [4 /*yield*/, startChatWith(user)];
                 case 3:
                     _c.sent();
                     messagesDiv = document.querySelector('#chatscreen_scroll');
@@ -1171,6 +1173,10 @@ function add_chat_message(user, received, message) {
                     html = converter.makeHtml(message);
                     message_span.innerHTML = html;
                     messagesDiv.appendChild(message_span);
+                    if (goBackTo) {
+                        goBack();
+                        startChatWith(goBackTo);
+                    }
                     return [2 /*return*/];
             }
         });
