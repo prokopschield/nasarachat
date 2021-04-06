@@ -160,6 +160,7 @@ const onScreenLoad = {
 		if (!profile_pic_div.childNodes.length) {
 			let picture = get_profile_picture_element(instance.username);
 			picture.classList.add('profile_picture_own');
+			picture.classList.remove('profile_picture_friend');
 			profile_pic_div.appendChild(picture);
 		}
 	},
@@ -820,7 +821,10 @@ async function startChatWith (user: string = lastChatPerson) {
 	for (const child of piceld.childNodes) {
 		piceld.removeChild(child);
 	}
-	piceld.appendChild(get_profile_picture_element(user));
+	const profile_picture = get_profile_picture_element(user);
+	profile_picture.classList.add('profile_picture_friend');
+	profile_picture.classList.remove('profile_picture_own');
+	piceld.appendChild(profile_picture);
 	await loadProfilePicture(user);
 }
 
@@ -881,6 +885,11 @@ async function add_chat_message (user: string, received: boolean, message: strin
 	message_span.className = `chat_message ${received ? 'chat_message_left' : 'chat_message_right'}`;
 	const html = converter.makeHtml(message);
 	message_span.innerHTML = html;
+	for (const child of message_span.querySelectorAll('*')) {
+		if (child instanceof Element) {
+			child.classList.add('chat_element', received ? 'chat_element_left' : 'chat_element_right');
+		}
+	}
 	messagesDiv.appendChild(message_span);
 	if (goBackTo) {
 		goBack();

@@ -228,6 +228,7 @@ var onScreenLoad = (_a = {},
                 if (!profile_pic_div.childNodes.length) {
                     picture = get_profile_picture_element(instance.username);
                     picture.classList.add('profile_picture_own');
+                    picture.classList.remove('profile_picture_friend');
                     profile_pic_div.appendChild(picture);
                 }
                 return [2 /*return*/];
@@ -1048,7 +1049,7 @@ var lastChatPerson = '';
 function startChatWith(user) {
     if (user === void 0) { user = lastChatPerson; }
     return __awaiter(this, void 0, void 0, function () {
-        var piceld, _i, _a, child;
+        var piceld, _i, _a, child, profile_picture;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -1074,7 +1075,10 @@ function startChatWith(user) {
                         child = _a[_i];
                         piceld.removeChild(child);
                     }
-                    piceld.appendChild(get_profile_picture_element(user));
+                    profile_picture = get_profile_picture_element(user);
+                    profile_picture.classList.add('profile_picture_friend');
+                    profile_picture.classList.remove('profile_picture_own');
+                    piceld.appendChild(profile_picture);
                     return [4 /*yield*/, loadProfilePicture(user)];
                 case 2:
                     _b.sent();
@@ -1132,10 +1136,10 @@ function clean_uri(uri) {
 function add_chat_message(user, received, message) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var messagesDiv, goBackTo, match1, match2, URIs, message_span, html;
+        var messagesDiv, goBackTo, match1, match2, URIs, message_span, html, _i, _c, child;
         var _this = this;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
                     if (!(user === lastChatPerson)) return [3 /*break*/, 1];
                     messagesDiv = document.querySelector('#chatscreen_scroll');
@@ -1148,9 +1152,9 @@ function add_chat_message(user, received, message) {
                     goBackTo = lastChatPerson;
                     return [4 /*yield*/, startChatWith(user)];
                 case 3:
-                    _c.sent();
+                    _d.sent();
                     messagesDiv = document.querySelector('#chatscreen_scroll');
-                    _c.label = 4;
+                    _d.label = 4;
                 case 4:
                     match1 = message.match(/\(?https?\:\/\/[^ \)]*\)?/gi);
                     match2 = message.match(/\([^\(]+\:[^\)]+\)/gi);
@@ -1176,12 +1180,18 @@ function add_chat_message(user, received, message) {
                             });
                         }); }))];
                 case 5:
-                    _c.sent();
+                    _d.sent();
                     message = message.replace(/[\<\>]/gi, function (m) { return "&#" + m.charCodeAt(0) + ";"; });
                     message_span = document.createElement('span');
                     message_span.className = "chat_message " + (received ? 'chat_message_left' : 'chat_message_right');
                     html = converter.makeHtml(message);
                     message_span.innerHTML = html;
+                    for (_i = 0, _c = message_span.querySelectorAll('*'); _i < _c.length; _i++) {
+                        child = _c[_i];
+                        if (child instanceof Element) {
+                            child.classList.add('chat_element', received ? 'chat_element_left' : 'chat_element_right');
+                        }
+                    }
                     messagesDiv.appendChild(message_span);
                     if (goBackTo) {
                         goBack();
